@@ -1,13 +1,21 @@
+from .base import SparkBase
 from ..constants import SPARK_API_BASE
 from ..utils.time import ts_to_dt
 
 
-class SparkWebhook(object):
+class SparkWebhook(SparkBase):
+
+    ''' Cisco Spark Webhook Model
+
+        :param session: SparkSession object
+        :type session: `SparkSession`
+        :param \**kwargs: All standard Spark API properties for a Webhook
+    '''
 
     API_BASE = f'{SPARK_API_BASE}webhooks/'
 
     def __init__(self,
-                 spark,
+                 session,
                  id,
                  name,
                  targetUrl,
@@ -22,7 +30,7 @@ class SparkWebhook(object):
                  filter=None,
                  secret=None):
 
-        self._id = id
+        super().__init__(session, id, 'webhooks')
         self._name = name
         self._targetUrl = targetUrl
         self._resource = resource
@@ -35,67 +43,139 @@ class SparkWebhook(object):
         self._created = created
         self._filter = filter
         self._secret = secret
-        self._path = 'webhooks'
-        self._url = f'{SPARK_API_BASE}{self.path}/{self.id}'
 
-        @property
-        def id(self):
-            return self._id
+    @property
+    def name(self):
+        ''' Webhook name
 
-        @property
-        def name(self):
-            return self._name
+            :getter: Gets the webhook name
+            :setter: Set the webhook name
+            :type: string
+        '''
+        return self._name
 
-        @property
-        def targetUrl(self):
-            return self._targetUrl
+    @name.setter
+    def name(self, val):
+        self.session.put(self.url,
+                         json={'name': val, 'targetUrl': self.targetUrl})
+        self._name = val
+        return
 
-        @property
-        def resource(self):
-            return self._resource
+    @property
+    def targetUrl(self):
+        ''' Webhook target url
 
-        @property
-        def event(self):
-            return self._event
+            :getter: Gets the webhook target url
+            :setter: Set the webhook target url
+            :type: string
+        '''
 
-        @property
-        def orgId(self):
-            return self._orgId
+        return self._targetUrl
 
-        @property
-        def createdBy(self):
-            return self._createdBy
+    @targetUrl.setter
+    def targetUrl(self, val):
+        self.session.put(self.url,
+                         json={'name': self.name, 'targetUrl': val})
+        self._targetUrl = val
+        return
 
-        @property
-        def appId(self):
-            return self._appId
+    @property
+    def resource(self):
+        ''' Webhook resource
 
-        @property
-        def ownedBy(self):
-            return self._ownedBy
+            https://developer.ciscospark.com/webhooks-explained.html#resources-events
 
-        @property
-        def status(self):
-            return self._status
+            :getter: Gets the webhook resources
+            :type: string
+        '''
+        return self._resource
 
-        @property
-        def created(self):
-            return ts_to_dt(self._created)
+    @property
+    def event(self):
+        ''' Webhook event(s) for the webhook
 
-        @property
-        def filter(self):
-            return self._filter
+            https://developer.ciscospark.com/webhooks-explained.html#resources-events
 
-        @property
-        def secret(self):
-            return self._secret
+            :getter: Gets the webhook event(s)
+            :type: string
+        '''
+        return self._event
 
-        def update(self, name=self.name, targetUrl=self.targetUrl):
-            self.spark.put(self.url,
-                           json={'name': name, 'targetUrl': targetUrl})
+    @property
+    def orgId(self):
+        ''' orgId of webhook's creater
 
-        def delete(self):
-            self.spark.delete(self.url)
+            :getter: Gets the webhook name
+            :type: string
+        '''
+        return self._orgId
 
-        def __repr__(self):
-            return f'SparkWebhook({self.id})'
+    @property
+    def createdBy(self):
+        ''' personId of webhook's creater
+
+            :getter: Gets the creater id
+            :type: string
+        '''
+        return self._createdBy
+
+    @property
+    def appId(self):
+        ''' appId of webhook
+
+            :getter: Gets the appId
+            :type: string
+        '''
+        return self._appId
+
+    @property
+    def ownedBy(self):
+        ''' personId of webhook's owner
+
+            :getter: Gets the creater id
+            :type: string
+        '''
+        return self._ownedBy
+
+    @property
+    def status(self):
+        ''' Webhook's status
+
+            :getter: Gets the status
+            :type: string
+        '''
+        return self._status
+
+    @property
+    def created(self):
+        ''' Webhook created time
+
+            :getter: returns datetime object of webhook creation time
+            :type: datetime.datetime
+        '''
+        return ts_to_dt(self._created)
+
+    @property
+    def filter(self):
+        ''' Webhook filter(s) for the webhook
+
+            https://developer.ciscospark.com/webhooks-explained.html#resources-events
+
+            :getter: Gets the webhook filter(s)
+            :type: string
+        '''
+        return self._filter
+
+    @property
+    def secret(self):
+        ''' Webhook event(s) for the webhook
+
+            https://developer.ciscospark.com/webhooks-explained.html#auth
+
+            :getter: Gets the webhook secret
+            :type: string
+        '''
+        return self._secret
+
+    def __repr__(self):
+        return f'SparkWebhook({self.id})'

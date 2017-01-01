@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 # API IDs start with this (base64 encoded cisco://)
 SPARK_URI_B64 = 'Y2lzY29zcGFyazovL'

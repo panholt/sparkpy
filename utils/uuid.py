@@ -14,9 +14,11 @@ def is_uuid(_id):
 
 
 def is_api_id(_id):
-    assert isinstance(_id, str)
-    if _id.startswith(SPARK_URI_B64):
+    if hasattr(_id, 'id'):
         return True
+    if isinstance(_id, str):
+        if _id.startswith(SPARK_URI_B64):
+            return True
     return False
 
 

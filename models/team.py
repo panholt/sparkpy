@@ -1,39 +1,44 @@
+from .base import SparkBase
 from .container import SparkContainer
 from .room import SparkRoom
+from .people import SparkPerson
 from .membership import SparkTeamMembership
 from ..constants import SPARK_API_BASE
 from ..utils.time import ts_to_dt
+from ..utils.uuid import is_api_id
 
+class SparkTeam(SparkBase):
 
-class SparkTeam(object):
+    ''' SparkTeam object reprsents a Team in Cisco Spark
+
+    If the class has public attributes, they may be documented here
+    in an ``Attributes`` section and follow the same formatting as a
+    function's ``Args`` section. Alternatively, attributes may be documented
+    inline with the attribute's declaration (see __init__ method below).
+
+    Properties created with the ``@property`` decorator should be documented
+    in the property's getter method.
+
+    Attributes:
+        attr1 (str): Description of `attr1`.
+        attr2 (:obj:`int`, optional): Description of `attr2`.
+
+    '''
 
     API_BASE = f'{SPARK_API_BASE}teams/'
 
     def __init__(self, spark, id, name, created, creatorId):
+        super().__init__(id, 'teams')
         self.spark = spark
-        self._id = id
         self._name = name
         self._created = created
         self._creatorId = creatorId
-        self._subrooms = SparkContainer(self.spark,
-                                        SparkRoom,
-                                        params={'teamId': self.id,
-                                                # Undocumented paramater
-                                                # Reduces response time a lot
-                                                'sortBy': 'id'})
-
-        self._members = SparkContainer(self.spark,
-                                       SparkTeamMembership,
-                                       params={'teamId': self.id})
-        self._path = 'teams'
-        self._url = f'{SPARK_API_BASE}{self.path}/{self.id}'
-
-    @property
-    def id(self):
-        return self._id
 
     @property
     def name(self):
+        '''str: The name of the Cisco Spark Team.
+                 Setter will invoke the API 
+        '''
         return self._name
 
     @name.setter
@@ -44,27 +49,32 @@ class SparkTeam(object):
 
     @property
     def created(self):
+        '''datetime.datetime: A datetime object representing 
+           the time that the team was created
+        '''
         return ts_to_dt(self._created)
 
     @property
     def creatorId(self):
+        '''str: The ID of the creator of the room'''
         return self._creatorId
 
     @property
     def subrooms(self):
-        return self._subrooms
+        '''SparkContainer:`SparkRoom`
+           Generator of subrooms belonging to the team.'''
+
+        return SparkContainer(self.spark, SparkRoom,
+                              params={'teamId': self.id,
+                                      'sortBy': 'id'})
 
     @property
     def members(self):
-        return self._members
+        '''SparkContainer:`SparkTeamMembership`
+           Generator of members of the team.'''
 
-    @property
-    def path(self):
-        return self._path
-
-    @property
-    def url(self):
-        return self._url
+        return SparkContainer(self.spark, SparkTeamMembership,
+                              params={'teamId': self.id})
 
     def delete(self):
         self.spark.delete(self.url)

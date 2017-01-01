@@ -1,4 +1,7 @@
+# -*- coding: utf-8 -*-
+
 import os
+import logging
 from time import sleep
 
 import requests
@@ -12,6 +15,8 @@ from .utils.uuid import is_api_id
 from .constants import SPARK_API_BASE, SPARK_PATHS, \
                        WEBHOOK_FILTERS, WEBHOOK_EVENTS, WEBHOOK_RESOURCES
 
+log = logging.getLogger('pyspark.session')
+
 
 class SparkSession(requests.Session):
 
@@ -22,36 +27,44 @@ class SparkSession(requests.Session):
                 self._bearer_token = os.environ['SPARK_TOKEN']
             except KeyError:
                 raise Exception('SparkSession Requires a bearer token')
-        self.headers.update({'Authorization': 'Bearer ' + self.bearer_token,
+        else:
+            self._bearer_token = bearer_token
+        self.headers.update({'Authorization': 'Bearer ' + self._bearer_token,
                              'Content-type': 'application/json; charset=utf-8'})
         self.hooks = {'response': [self._retry_after_hook]}
-        self._rooms = SparkContainer(self, SparkRoom)
-        self._teams = SparkContainer(self, SparkTeam)
-        self._webhooks = SparkContainer(self, SparkWebhook)
-        self._id, self._is_bot = self.__get_self()
+        self._id = None
+        self._is_bot = None
 
     @property
     def rooms(self):
-        return self._rooms
+        return SparkContainer(self, SparkRoom)
 
     @property
     def teams(self):
-        return self._teams
+        return SparkContainer(self, SparkTeam)
 
     @property
     def webhooks(self):
-        return self._webhooks
-
-    @property
-    def bearer_token(self):
-        return self._bearer_token
+        return SparkContainer(self, SparkWebhook)
 
     @property
     def id(self):
+        '''Returns the `personId` property of the bearer_token's owner
+           :type: string '''
+        if self._id is None:
+            data = self.get('people/me').json()
+            self._id = data['id']
+            self._is_bot = data['type'] == 'bot'
         return self._id
 
     @property
     def is_bot(self):
+        '''Returns `True` if bearer_token's owner is a bot
+           type: bool '''
+        if self._id is None:
+            data = self.get('people/me').json()
+            self._id = data['id']
+            self._is_bot = data['type'] == 'bot'
         return self._is_bot
 
     def __make_url(self, path):
@@ -61,14 +74,12 @@ class SparkSession(requests.Session):
             return SPARK_API_BASE + path
         return path
 
-    def __get_self(self):
-        data = self.get('people/me').json()
-        return data['id'], data['type'] == 'bot'
-
     # Response session hooks
     def _retry_after_hook(self, response, *args, **kwargs):
         if response.status_code == 429:
             sleep_time = int(response.headers.get('Retry-After', 15))
+            log.warning('Received a 429 Response. Backing off for %ss',
+                        sleep_time)
             sleep(sleep_time)
             return self.send(response.request)
 
@@ -76,44 +87,71 @@ class SparkSession(requests.Session):
     # eg: messages/{id} becomes https://api.ciscospark.com/v1/messages/{id}
 
     def get(self, path, **kwargs):
-        return super().get(self.__make_url(path), **kwargs)
+        url = self.__make_url(path)
+        log.debug('Sending GET to %s', url)
+        return super().get(url, **kwargs)
 
     def post(self, path, **kwargs):
-        return super().post(self.__make_url(path), **kwargs)
+        url = self.__make_url(path)
+        log.debug('Sending POST to %s', url)
+        return super().post(url, **kwargs)
 
     def put(self, path, **kwargs):
-        return super().put(self.__make_url(path), **kwargs)
+        url = self.__make_url(path)
+        log.debug('Sending PUT to %s', url)
+        return super().put(url, **kwargs)
 
     def delete(self, path, **kwargs):
-        return super().delete(self.__make_url(path), **kwargs)
+        url = self.__make_url(path)
+        log.debug('Sending DELETE to %s', url)
+        return super().delete(url, **kwargs)
 
     def create_room(self, title, team_id=None):
+        '''Create a Cisco Spark room
+
+                :param title: Room title
+                :type title: str
+
+                :return: SparkTeam
+            '''
+
         data = {'title': title}
         if team_id:
             assert is_api_id(team_id)
             data['teamId'] = team_id
         room = self.post('rooms', json=data).json()
-        return self.rooms[room['id']]
+        return SparkRoom(**room)
 
     def create_one_on_one_room(self, person, message):
-        assert isinstance(message, str) and len(message) > 0
-        data = {'markdown': message}
-        if isinstance(person, SparkPerson):
-            data['toPersonId'] = person.id
+        '''Create or send a message to a 1:1 room
+
+                :param person: Either a personId, email address, or API id
+                :type person: str
+
+                :return: SparkRoom
+            '''
+
+        isinstance(message, str) and len(message) > 0
+        if isinstance(person, SparkPerson) or is_api_id(person):
+            message = self.send_message(message, person_id=person.id)
         elif '@' in person:
-            data['toPersonEmail'] = person
-        elif is_api_id(person):
-            data['toPersonId'] = person
+            message = self.send_message(message, person_email=person)
         else:
             raise ValueError('Person must be an email address, SparkPerson, \
                              or Spark API ID')
-
-        _message = self.post('messages', json=data).json()
-        return self.rooms[_message['roomId']]
+        return message.room
 
     def create_team(self, name):
-        team = self.post('teams', json={'name': name}).json()
-        return self.teams[team['id']]
+        '''Create a Cisco Spark webhook
+
+                :param name: Team name
+                :type name: str
+
+                :return: SparkTeam
+            '''
+
+        team = self.post('teams', json={'name': name})
+        return SparkTeam(**team.json())
 
     def create_webhook(self,
                        name,
@@ -122,6 +160,33 @@ class SparkSession(requests.Session):
                        event,
                        filter=None,
                        secret=None):
+        '''Create a Cisco Spark webhook
+
+                :param name: Webhook name
+                :type name: str
+
+                :param target_url: Sets the `targetUrl` property
+                :type target_url: str
+
+                :param resource: Sets the `resource` property
+                :type resource: str
+
+                :param event: Sets the `event` property
+                :type event: str
+
+                :param person_id: Sets the `toPersonId` property
+                :type person_id: str
+
+                :param filter: Sets the `filter` property
+                :type filter: str
+
+                :param secret: Sets the `secret` property
+                :type secret: str
+
+                :return: SparkWebhook
+
+                :raises: AssertionError
+            '''
 
         assert resource in WEBHOOK_RESOURCES
         assert event in WEBHOOK_EVENTS
@@ -135,15 +200,36 @@ class SparkSession(requests.Session):
             data['filter'] = filter
         if secret:
             data['secret'] = secret
-        webhook = self.post('webhooks', json=data).json()
-        return self.webhooks[webhook['id']]
+        webhook = self.post('webhooks', json=data)
+        return SparkWebhook(**webhook.json())
 
     def send_message(self,
                      text,
                      room_id=None,
                      person_id=None,
                      person_email=None):
-        ''' Method to chunk and send messages'''
+        '''Send a Cisco Spark message
+
+            :param text: Markdown formatted message body
+                         If message is longer than 7,000 characters
+                         it is split at linebreak boundries
+                         and sent as seperate messages
+            :type text: str
+            :param room_id: Sets the `roomId` property
+            :type room_id: str
+            :param person_id: Sets the `toPersonId` property
+            :type person_id: str
+            :param person_email: Sets the `toPersonEmailAddress` property
+            :type person_id: str
+
+            :return: None
+            :raises ValueError: when none of 'room_id', 'person_id',
+                                or 'person_email' are provided
+
+            .. note:: This method must be called with exactly one of
+                      'room_id', 'person_id', 'person_email'
+        '''
+
         base_data = {}
         if room_id:
             assert is_api_id(room_id)
@@ -173,4 +259,4 @@ class SparkSession(requests.Session):
         return
 
     def __repr__(self):
-        return 'SparkSession()'
+        return 'SparkSession'

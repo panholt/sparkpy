@@ -1,25 +1,34 @@
+from .base import SparkBase
 from ..constants import SPARK_API_BASE
-from ..utils.time import ts_to_dt
 
 
-class SparkLicense(object):
+class SparkRole(SparkBase):
+
+    ''' Cisco Spark Role Model
+
+        :param session: SparkSession object
+        :type session: `SparkSession`
+        :param \**kwargs: All standard Spark API properties for a Role
+    '''
 
     API_BASE = f'{SPARK_API_BASE}roles/'
 
-    def __init__(self id, name):
+    def __init__(self, session, id, name):
 
-        self._id = id
+        super().__init__(session, id, 'roles')
         self._name = name
-        self._path = 'roles'
-        self._url = f'{SPARK_API_BASE}{self.path}/{self.id}'
-
-        @property
-        def id(self):
-            return self._id
 
         @property
         def name(self):
+            ''' Role name
+
+            :getter: Gets the name of the role
+            :type: string
+            '''
             return self._name
 
+        def delete(self):
+            raise NotImplemented
+
         def __repr__(self):
-        return f'SparkRole{self.id})'
+            return f'SparkRole{self.id})'

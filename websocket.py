@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import json
 import websocket
 import logging
@@ -144,8 +146,8 @@ class SparkWebsocket(websocket.WebSocketApp):
 
     def _get_devices(self):
         r = self.spark.get('https://wdm-a.wbx2.com/wdm/api/v1/devices')
-        if r.status_code == 200:
-            return r.json()['devices']
+        if r.get('devices'):
+            return r['devices']
         else:
             # TODO Exceptions
             return []
@@ -155,20 +157,15 @@ class SparkWebsocket(websocket.WebSocketApp):
             if device.get('name') == 'python-spark-websocket':
                 return device
         else:
-            r = self.spark.post('https://wdm-a.wbx2.com/wdm/api/v1/devices',
-                                # https://github.com/ciscospark/spark-js-sdk/tree/master/src/defaults.js#L64
-                                json={'deviceName': 'python-spark-websocket',
-                                      'deviceType': 'DESKTOP',
-                                      'localizedModel': 'DESKTOP',
-                                      'model': 'DESKTOP',
-                                      'name': 'python-spark-websocket',
-                                      'systemName': 'DESKTOP',
-                                      'systemVersion': 42})
-            if r.status_code == 200:
-                return r.json()
-            else:
-                # TODO Exceptions
-                raise Exception('Failed to create device')
+            return self.spark.post('https://wdm-a.wbx2.com/wdm/api/v1/devices',
+                                    # https://github.com/ciscospark/spark-js-sdk/tree/master/src/defaults.js#L64
+                                    json={'deviceName': 'python-spark-websocket',
+                                           'deviceType': 'DESKTOP',
+                                           'localizedModel': 'DESKTOP',
+                                           'model': 'DESKTOP',
+                                           'name': 'python-spark-websocket',
+                                           'systemName': 'DESKTOP',
+                                           'systemVersion': 42})
 
     def __repr__(self):
         return 'SparkWebsocket({})'.format(self.wss_url)

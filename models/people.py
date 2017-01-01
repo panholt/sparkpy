@@ -1,8 +1,9 @@
+from .base import SparkBase
 from ..utils.time import ts_to_dt
 from ..constants import SPARK_API_BASE
 
 
-class SparkPerson(object):
+class SparkPerson(SparkBase):
 
     API_BASE = f'{SPARK_API_BASE}people/'
 
@@ -15,7 +16,7 @@ class SparkPerson(object):
                  orgId,
                  created,
                  type,
-                 firstName=None,
+                 firstName=None,  # ----!Optional properties
                  lastName=None,
                  nickName=None,
                  lastActivity=None,
@@ -23,11 +24,11 @@ class SparkPerson(object):
                  licenses=[],
                  roles=[],
                  timezone=None,
-                 invitePending=False,  # Default
-                 loginEnabled=True):   # Default
+                 invitePending=False,
+                 loginEnabled=True):
 
+        super().__init__(id, 'people')
         self.spark = spark
-        self._id = id
         self._emails = emails
         self._displayName = displayName
         self._firstName = firstName
@@ -44,22 +45,12 @@ class SparkPerson(object):
         self._timezone = timezone
         self._invitePending = invitePending
         self._loginEnabled = loginEnabled
-        self._path = 'people'
-        self._url = f'{SPARK_API_BASE}{self.path}/{self.id}'
-
-    @property
-    def id(self):
-        return self._id
 
     @property
     def emails(self):
         # Emails is returned as an array but will only ever have one entry
         # For now anyway
         return self._emails[0]
-
-    @property
-    def displayName(self):
-        return self._displayName
 
     @property
     def displayName(self):
@@ -105,14 +96,6 @@ class SparkPerson(object):
     @property
     def type(self):
         return self._type
-
-    @property
-    def url(self):
-        return self._url
-
-    @property
-    def path(self):
-        return self._path
 
     def delete(self):
         self.spark.delete(self.url)
