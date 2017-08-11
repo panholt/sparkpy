@@ -9,8 +9,8 @@ from .models.people import SparkPerson
 from .models.container import SparkContainer
 from .models.webhook import SparkWebhook
 from .utils.uuid import is_api_id
-from .constants import SPARK_API_BASE, SPARK_PATHS
-from .constants import WEBHOOK_FILTERS, WEBHOOK_EVENTS, WEBHOOK_RESOURCES
+from .constants import SPARK_API_BASE, SPARK_PATHS \
+                       WEBHOOK_FILTERS, WEBHOOK_EVENTS, WEBHOOK_RESOURCES
 
 
 class SparkSession(requests.Session):
@@ -136,6 +136,39 @@ class SparkSession(requests.Session):
             data['secret'] = secret
         webhook = self.post('webhooks', json=data).json()
         return self.webhooks[webhook['id']]
+
+    def send_message(self,
+                     text,
+                     room_id=None,
+                     person_id=None,
+                     person_email=None):
+        ''' Method to chunk and send messages'''
+        base_data = {}
+        if room_id:
+            assert is_api_id(room_id)
+            base_data['roomId'] = room_id
+        elif person_id:
+            assert is_api_id(person_id)
+            base_data['toPersonId'] = person_id
+        elif person_email:
+            assert '@' in person_email
+            base_data['toPersonEmail'] = person_email
+        else:
+            raise ValueError('Must provide either a roomId, personId, or email address')
+
+        while len(message) > 7000:  # Technically 7439
+            split_idx = message.rfind('\n', 1, 6999)
+            if split_idx == -1:
+                split_idx = 7000
+            data = {'markdown': message[:split_idx]}
+            data.update(base_data)
+            self.post('messages', json=data)
+            message = message[split_idx:]
+        else:
+            data = {'markdown': message[:split_idx]}
+            data.update(base_data)
+            self.post('messages', json=data)
+        return
 
     def __repr__(self):
         return 'SparkSession()'
