@@ -9,7 +9,7 @@ from .models.people import SparkPerson
 from .models.container import SparkContainer
 from .models.webhook import SparkWebhook
 from .utils.uuid import is_api_id
-from .constants import SPARK_API_BASE, SPARK_PATHS \
+from .constants import SPARK_API_BASE, SPARK_PATHS, \
                        WEBHOOK_FILTERS, WEBHOOK_EVENTS, WEBHOOK_RESOURCES
 
 
@@ -88,10 +88,10 @@ class SparkSession(requests.Session):
         return super().delete(self.__make_url(path), **kwargs)
 
     def create_room(self, title, team_id=None):
-        data = {'name': title}
+        data = {'title': title}
         if team_id:
             assert is_api_id(team_id)
-            data['teamId': team_id]
+            data['teamId'] = team_id
         room = self.post('rooms', json=data).json()
         return self.rooms[room['id']]
 
@@ -105,7 +105,8 @@ class SparkSession(requests.Session):
         elif is_api_id(person):
             data['toPersonId'] = person
         else:
-            raise ValueError('Person must be an email address, SparkPerson, or Spark API ID')
+            raise ValueError('Person must be an email address, SparkPerson, \
+                             or Spark API ID')
 
         _message = self.post('messages', json=data).json()
         return self.rooms[_message['roomId']]
@@ -154,18 +155,19 @@ class SparkSession(requests.Session):
             assert '@' in person_email
             base_data['toPersonEmail'] = person_email
         else:
-            raise ValueError('Must provide either a roomId, personId, or email address')
+            raise ValueError('Must provide either a roomId, personId, \
+                             or email address')
 
-        while len(message) > 7000:  # Technically 7439
-            split_idx = message.rfind('\n', 1, 6999)
+        while len(text) > 7000:  # Technically 7439
+            split_idx = text.rfind('\n', 1, 6999)
             if split_idx == -1:
                 split_idx = 7000
-            data = {'markdown': message[:split_idx]}
+            data = {'markdown': text[:split_idx]}
             data.update(base_data)
             self.post('messages', json=data)
-            message = message[split_idx:]
+            text = text[split_idx:]
         else:
-            data = {'markdown': message[:split_idx]}
+            data = {'markdown': text}
             data.update(base_data)
             self.post('messages', json=data)
         return

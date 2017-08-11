@@ -66,9 +66,47 @@ class SparkTeam(object):
     def url(self):
         return self._url
 
-    @property
     def delete(self):
         self.spark.delete(self.url)
+
+    def create_subroom(self, title):
+        return self.spark.create_room(title, team_id=self.id)
+
+    def add_person_by_id(self, person, moderator=False):
+        if isinstance(person, SparkPerson):
+            person = person.id
+        elif not is_api_id(person):
+            raise ValueError('Person must be a SparkPerson object \
+                              or Spark API ID')
+        self.spark.post('team/memberships', json={'teamId': self.id,
+                                                  'personId': person,
+                                                  'isModerator': moderator})
+        return
+
+    def add_person_by_email(self, email, moderator=False):
+        assert '@' in email
+        self.spark.post('team/memberships', json={'teamId': self.id,
+                                                  'personEmail': email,
+                                                  'isModerator': moderator})
+        return
+
+    def remove_person_by_id(self, person):
+        if isinstance(person, SparkPerson):
+            person = person.id
+        elif not is_api_id(person):
+            raise ValueError('Person must be a SparkPerson object or \
+                             Spark API ID')
+        for member in self.members:
+            if member.id == person:
+                member.delete()
+        return
+
+    def remove_person_by_email(self, email, moderator=False):
+        assert '@' in email
+        for member in self.members:
+            if member.personEmail == email:
+                member.delete()
+        return
 
     def __repr__(self):
         return f'SparkTeam({self.id})'

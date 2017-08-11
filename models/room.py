@@ -101,7 +101,7 @@ class SparkRoom(object):
         return data
 
     def send_message(self, text):
-        self.spark.post('messages', json={'markdown': text, 'roomId': self.id})
+        self.spark.send_message(text, room_id=self.id)
         return
 
     def delete(self):
@@ -129,20 +129,20 @@ class SparkRoom(object):
             person = person.id
         elif not is_api_id(person):
             raise ValueError('Person must be a SparkPerson object or Spark API ID')
-        for member in self.memberships:
+        for member in self.members:
             if member.id == person:
                 member.delete()
         return
 
     def remove_person_by_email(self, email, moderator=False):
         assert '@' in email
-        for member in self.memberships:
+        for member in self.members:
             if member.personEmail == email:
                 member.delete()
         return
 
     def destroy(self):
-        for member in self.memberships:
+        for member in self.members:
             if member.personId != self.spark.id:
                 member.delete()
         self.delete()
