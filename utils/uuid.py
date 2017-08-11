@@ -1,6 +1,6 @@
 import base64
 from urllib.parse import urlparse
-from uuid import UUID
+from uuid import UUID, uuid4
 from ..constants import SPARK_PATHS, SPARK_URI_B64
 
 
@@ -37,3 +37,7 @@ def uuid_to_api_id(path, _id):
     url = f'ciscospark://{region}/{path.upper()}/{_id}'
     url = base64.b64encode(url.encode('utf-8')).decode('utf-8')
     return url.split('=')[0]
+
+
+def uuid_v4_str():
+    return str(uuid4())

@@ -1,8 +1,10 @@
 from .message import SparkMessage
 from .membership import SparkMembership
+from .people import SparkPerson
 from .container import SparkContainer
 from ..constants import SPARK_API_BASE
 from ..utils.time import ts_to_dt
+from ..utils.uuid import is_api_id
 
 
 class SparkRoom(object):
@@ -35,7 +37,7 @@ class SparkRoom(object):
         self._url = f'{SPARK_API_BASE}{self.path}/{self.id}'
         self._messages = SparkContainer(self.spark,
                                         SparkMessage,
-                                        params={'roomId': self.id})
+                                        params=self.message_params())
         self._members = SparkContainer(self.spark,
                                        SparkMembership,
                                        params={'roomId': self.id})
@@ -64,12 +66,6 @@ class SparkRoom(object):
     def isLocked(self):
         return self._isLocked
 
-    @isLocked.setter
-    def isLocked(self, value):
-        assert isinstance(value, bool)
-        # TODO this.
-        self._isLocked = value
-
     @property
     def lastActivity(self):
         return ts_to_dt(self._lastActivity)
@@ -97,6 +93,60 @@ class SparkRoom(object):
     @property
     def messages(self):
         return self._messages
+
+    def message_params(self):
+        data = {'roomId': self.id}
+        if self.spark.is_bot and self.type == 'group':
+            data['mentionedPeople'] = 'me'
+        return data
+
+    def send_message(self, text):
+        self.spark.post('messages', json={'markdown': text, 'roomId': self.id})
+        return
+
+    def delete(self):
+        self.spark.delete(self.url)
+
+    def add_person_by_id(self, person, moderator=False):
+        if isinstance(person, SparkPerson):
+            person = person.id
+        elif not is_api_id(person):
+            raise ValueError('Person must be a SparkPerson object or Spark API ID')
+        self.spark.post('memberships', json={'roomId': self.id,
+                                             'personId': person,
+                                             'isModerator': moderator})
+        return
+
+    def add_person_by_email(self, email, moderator=False):
+        assert '@' in email
+        self.spark.post('memberships', json={'roomId': self.id,
+                                             'personEmail': email,
+                                             'isModerator': moderator})
+        return
+
+    def remove_person_by_id(self, person):
+        if isinstance(person, SparkPerson):
+            person = person.id
+        elif not is_api_id(person):
+            raise ValueError('Person must be a SparkPerson object or Spark API ID')
+        for member in self.memberships:
+            if member.id == person:
+                member.delete()
+        return
+
+    def remove_person_by_email(self, email, moderator=False):
+        assert '@' in email
+        for member in self.memberships:
+            if member.personEmail == email:
+                member.delete()
+        return
+
+    def destroy(self):
+        for member in self.memberships:
+            if member.personId != self.spark.id:
+                member.delete()
+        self.delete()
+        return
 
     def __repr__(self):
         return f'SparkRoom({self.id})'

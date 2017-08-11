@@ -80,6 +80,9 @@ class SparkMessage(object):
     def files(self):
         return self._files
 
+    def delete(self):
+        self.spark.delete(self.url)
+        return
+
     def __repr__(self):
         return f'SparkMessage({self.id})'
-

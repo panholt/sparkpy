@@ -17,7 +17,10 @@ class SparkTeam(object):
         self._creatorId = creatorId
         self._subrooms = SparkContainer(self.spark,
                                         SparkRoom,
-                                        params={'teamId': self.id})
+                                        params={'teamId': self.id,
+                                                # Undocumented paramater
+                                                # Reduces response time a lot
+                                                'sortBy': 'id'})
 
         self._members = SparkContainer(self.spark,
                                        SparkTeamMembership,
@@ -32,6 +35,12 @@ class SparkTeam(object):
     @property
     def name(self):
         return self._name
+
+    @name.setter
+    def name(self, val):
+        self.spark.put(self.url, json={'name': val})
+        self._val = val
+        return
 
     @property
     def created(self):
@@ -56,6 +65,10 @@ class SparkTeam(object):
     @property
     def url(self):
         return self._url
+
+    @property
+    def delete(self):
+        self.spark.delete(self.url)
 
     def __repr__(self):
         return f'SparkTeam({self.id})'

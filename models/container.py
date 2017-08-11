@@ -1,4 +1,3 @@
-from datetime import datetime
 from collections import deque
 from ..utils.uuid import is_api_id
 
@@ -9,7 +8,6 @@ class SparkContainer(object):
     def __init__(self, spark, klass, params={}):
         self.spark = spark
         self._klass = klass
-        self._created = datetime.now()
         self._generator = self._make_generator()
         self._items = deque()
         self._finished = False
@@ -19,9 +17,10 @@ class SparkContainer(object):
     def klass(self):
         return self._klass
 
-    @property
-    def created(self):
-        return self._created
+    def __iter__(self):
+        # Someone called this as for _ in self so return a fresh Generator
+        self._generator = self._make_generator(params=self._params)
+        return self._generator
 
     def __getitem__(self, key):
         # List style lookups
@@ -49,6 +48,8 @@ class SparkContainer(object):
 
     def _make_generator(self, params={}):
         assert isinstance(params, dict)
+        self._items = deque()
+        self._finished = False
         response = self.spark.get(self._klass.API_BASE, params=self._params)
         data = response.json()
         items = deque(data.get('items', []))

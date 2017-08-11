@@ -6,8 +6,12 @@ import requests
 
 from .models.room import SparkRoom
 from .models.team import SparkTeam
+from .models.people import SparkPerson
 from .models.container import SparkContainer
+from .models.webhook import SparkWebhook
+from .utils.uuid import is_api_id
 from .constants import SPARK_API_BASE, SPARK_PATHS
+from .constants import WEBHOOK_FILTERS, WEBHOOK_EVENTS, WEBHOOK_RESOURCES
 
 
 class SparkSession(requests.Session):
@@ -16,14 +20,51 @@ class SparkSession(requests.Session):
         super().__init__()
         if not bearer_token:
             try:
-                bearer_token = os.environ['SPARK_TOKEN']
+                self._bearer_token = os.environ['SPARK_TOKEN']
             except KeyError:
                 raise Exception('SparkSession Requires a bearer token')
-        self.headers.update({'Authorization': 'Bearer ' + bearer_token,
+        self.headers.update({'Authorization': 'Bearer ' + self.bearer_token,
                              'Content-type': 'application/json; charset=utf-8'})
         self.hooks = {'response': [self._retry_after_hook]}
         self._rooms = SparkContainer(self, SparkRoom)
         self._teams = SparkContainer(self, SparkTeam)
+        self._webhooks = SparkContainer(self, SparkWebhook)
+        self._id, self._is_bot = self.__get_self()
+
+    @property
+    def rooms(self):
+        return self._rooms
+
+    @property
+    def teams(self):
+        return self._teams
+
+    @property
+    def webhooks(self):
+        return self._webhooks
+
+    @property
+    def bearer_token(self):
+        return self._bearer_token
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def is_bot(self):
+        return self._is_bot
+
+    def __make_url(self, path):
+        assert isinstance(path, str)
+        root = path.lower().split('/')[0]
+        if root in SPARK_PATHS:
+            return SPARK_API_BASE + path
+        return path
+
+    def __get_self(self):
+        data = self.get('people/me').json()
+        return data['id'], data['type'] == 'bot'
 
     # Response session hooks
     def _retry_after_hook(self, response, *args, **kwargs):
@@ -47,35 +88,55 @@ class SparkSession(requests.Session):
     def delete(self, path, **kwargs):
         return super().delete(self.__make_url(path), **kwargs)
 
-    def _make_generator(self, response, klass=None):
-        data = response.json()
-        d = deque(data.get('items', []))
-        while d:
-            if klass:
-                yield klass(self, **d.popleft())
-            else:
-                yield d.popleft()
-            if not d:
-                if response.links.get('next'):
-                    response = self.get(data.links['next']['url'])
-                    d.extend(response.json()['items'])
-                else:
-                    return
+    def create_room(self, title, team_id=None):
+        data = {'name': title}
+        if team_id:
+            assert is_api_id(team_id)
+            data['teamId': team_id]
+        room = self.post('rooms', json=data).json()
+        return self.rooms[room['id']]
 
-    def __make_url(self, path):
-        assert isinstance(path, str)
-        root = path.lower().split('/')[0]
-        if root in SPARK_PATHS:
-            return SPARK_API_BASE + path
-        return path
+    def create_one_on_one_room(self, person, message):
+        assert isinstance(message, str) and len(message) > 0
+        data = {'markdown': message}
+        if isinstance(person, SparkPerson):
+            data['toPersonId'] = person.id
+        elif '@' in person:
+            data['toPersonEmail'] = person
+        elif is_api_id(person):
+            data['toPersonId'] = person
+        else:
+            raise ValueError('Person must be an email address, SparkPerson, or Spark API ID')
 
-    @property
-    def rooms(self):
-        return self._rooms
+        _message = self.post('messages', json=data).json()
+        return self.rooms[_message['roomId']]
 
-    @property
-    def teams(self):
-        return self._teams
+    def create_team(self, name):
+        team = self.post('teams', json={'name': name}).json()
+        return self.teams[team['id']]
+
+    def create_webhook(self,
+                       name,
+                       target_url,
+                       resource,
+                       event,
+                       filter=None,
+                       secret=None):
+
+        assert resource in WEBHOOK_RESOURCES
+        assert event in WEBHOOK_EVENTS
+        data = {'name': name,
+                'targetUrl': target_url,
+                'resource': resource,
+                'event': event}
+        if filter:
+            assert any([filter.starswith(item)
+                        for item in WEBHOOK_FILTERS[resource]])
+            data['filter'] = filter
+        if secret:
+            data['secret'] = secret
+        webhook = self.post('webhooks', json=data).json()
+        return self.webhooks[webhook['id']]
 
     def __repr__(self):
         return 'SparkSession()'

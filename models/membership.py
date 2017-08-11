@@ -59,6 +59,12 @@ class SparkMembership(object):
     def isModerator(self):
         return self._isModerator
 
+    @isModerator.setter
+    def isModerator(self, val):
+        assert isinstance(val, bool)
+        self.spark.put(self.url, json={'isModerator': val})
+        return
+
     @property
     def isMonitor(self):
         return self._isMonitor
@@ -74,6 +80,10 @@ class SparkMembership(object):
     @property
     def url(self):
         return self._url
+
+    def delete(self):
+        self.spark.delete(self.url)
+        return
 
     def __repr__(self):
         return f'SparkMembership({self.id})'
@@ -145,6 +155,10 @@ class SparkTeamMembership(object):
     @property
     def url(self):
         return self._url
+
+    def delete(self):
+        self.spark.delete(self.url)
+        return
 
     def __repr__(self):
         return f'SparkTeamMembership({self.id})'

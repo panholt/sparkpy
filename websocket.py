@@ -1,28 +1,26 @@
 import json
 import websocket
 import logging
-from .utils import uuid, uuid_to_api_id
+from .utils.uuid import uuid_v4_str, uuid_to_api_id
 
 log = logging.getLogger('pyspark.websocket')
 
+
 class SparkWebsocket(websocket.WebSocketApp):
 
-    def __init__(self, wss_url, message_callback, rooms_callback, bearer_token=None):
-        if not bearer_token:
-            try:
-                bearer_token = os.environ['SPARK_TOKEN']
-            except KeyError:
-                raise Exception('SparkWebsocket Requires a bearer token')
-        self._wss_url = wss_url
+    def __init__(self, spark, message_callback, rooms_callback):
+        self.spark = spark
+        self._device = self._create_device()
+        self._wss_url = self._device['webSocketUrl']
         self._last_ping_id = ''
         self._rooms_callback = rooms_callback
         self._message_callback = message_callback
-        super().__init__(self._wss_url,
-                         on_open = self._open_cb,
-                         on_message = self._message_callback,
-                         on_close = self._close_cb,
-                         on_ping = self._ping_cb,
-                         on_error = self._error_cb)
+        super().__init__(self.wss_url,
+                         on_open=self._open_cb,
+                         on_message=self._message_cb,
+                         on_close=self._close_cb,
+                         on_ping=self._ping_cb,
+                         on_error=self._error_cb)
 
     @property
     def wss_url(self):
@@ -40,30 +38,30 @@ class SparkWebsocket(websocket.WebSocketApp):
     @property
     def rooms_callback(self):
         return self._rooms_callback
-    
+
     @property
     def message_callback(self):
         return self._message_callback
 
     def _open_cb(self, ws):
         log.info('Websocket connected')
-        data = {'id': uuid(),
+        data = {'id': uuid_v4_str(),
                 'type': 'authorization',
-                'data': {'token': 'Bearer ' + self.token}}
+                'data': {'token': 'Bearer ' + self.spark.bearer_token}}
         data = json.dumps(data)
-        log.debug('Sending: %s', data)
+        print(f'Sending: {data}')
         ws.send(data)
         self._spark_ping()
         return
 
     def _open_cb(self, ws):
         log.info('Websocket connected')
-        data = {'id': uuid(),
+        data = {'id': uuid_v4_str(),
                 'type': 'authorization',
-                'data': {'token': 'Bearer ' + self.token}}
+                'data': {'token': 'Bearer ' + self.spark.bearer_token}}
         data = json.dumps(data)
 
-        log.debug('Sending: %s', data)
+        print(f'Sending: {data}')
         ws.send(data)
         self._spark_ping()
         return
@@ -71,7 +69,7 @@ class SparkWebsocket(websocket.WebSocketApp):
     def _message_cb(self, ws, message):
         try:
             event = json.loads(message)
-            log.debug('Received event on websocket: %s', event)
+            print(f'Received event on websocket: {event}')
             # Handle pings
             if event.get('type') == 'pong':
                 if event.get('id') != self._last_ping_id:
@@ -89,16 +87,19 @@ class SparkWebsocket(websocket.WebSocketApp):
             elif event_type == 'conversation.activity':
                 verb = event['data']['activity']['verb']
                 if verb == 'post':
-                    _id = uuid_to_api_id('messages', event['data']['activity']['id'])
+                    _id = uuid_to_api_id('messages',
+                                         event['data']['activity']['id'])
                     self._message_callback(_id)
                 elif verb == 'acknowledge':
                     # read receipt, ignore
                     return
                 elif verb == 'create':
-                    _id = uuid_to_api_id('rooms', event['data']['activity']['id'])
+                    _id = uuid_to_api_id('rooms',
+                                         event['data']['activity']['id'])
                     self._rooms_callback(_id)
                 elif verb == 'leave':
-                    _id = uuid_to_api_id('rooms', event['data']['activity']['id'])
+                    _id = uuid_to_api_id('rooms',
+                                         event['data']['activity']['id'])
                     self._rooms_callback(_id, leave=True)
                 elif verb == 'add':
                     if 'TEAM' in event['data']['activity']['target']['tags']:
@@ -106,16 +107,18 @@ class SparkWebsocket(websocket.WebSocketApp):
                         return
                     else:
                         # Added to room
-                        _id = uuid_to_api_id('rooms', event['data']['activity']['target']['id'])
+                        _id = uuid_to_api_id('rooms',
+                                             event['data']['activity']['target']['id'])
                         self._rooms_callback(_id)
 
                 elif verb == 'update':
-                    _id = uuid_to_api_id('rooms', event['data']['activity']['target']['id'])
+                    _id = uuid_to_api_id('rooms',
+                                         event['data']['activity']['target']['id'])
                     self._rooms_callback(_id)
                 else:
                     log.warning('Unknown verb: %s', verb)
             else:
-                print('Unknown event type: {}'.format(event_type))
+                print(f'Unknown event type: {event_type}')
         except ValueError:
             pass
         return
@@ -124,20 +127,48 @@ class SparkWebsocket(websocket.WebSocketApp):
         raise error
 
     def _close_cb(self, ws):
-        log.info('Websocket connection closed')
+        print('Websocket connection closed')
         return
 
     def _ping_cb(self, ws, data):
-        log.debug('_ping_cb hit, sending ping')
+        print('_ping_cb hit, sending ping')
         self._spark_ping()
         return
 
     def _spark_ping(self):
-        self._last_ping_id = str(uuid.uuid4())
+        self._last_ping_id = uuid_v4_str()
         data = json.dumps({'type': 'ping', 'id': self._last_ping_id})
-        log.debug('Sending: %s', data)
-        self.app.send(data)
+        print(f'PING! Sending: {data}')
+        self.send(data)
         return
+
+    def _get_devices(self):
+        r = self.spark.get('https://wdm-a.wbx2.com/wdm/api/v1/devices')
+        if r.status_code == 200:
+            return r.json()['devices']
+        else:
+            # TODO Exceptions
+            return []
+
+    def _create_device(self):
+        for device in self._get_devices():
+            if device.get('name') == 'python-spark-websocket':
+                return device
+        else:
+            r = self.spark.post('https://wdm-a.wbx2.com/wdm/api/v1/devices',
+                                # https://github.com/ciscospark/spark-js-sdk/tree/master/src/defaults.js#L64
+                                json={'deviceName': 'python-spark-websocket',
+                                      'deviceType': 'DESKTOP',
+                                      'localizedModel': 'DESKTOP',
+                                      'model': 'DESKTOP',
+                                      'name': 'python-spark-websocket',
+                                      'systemName': 'DESKTOP',
+                                      'systemVersion': 42})
+            if r.status_code == 200:
+                return r.json()
+            else:
+                # TODO Exceptions
+                raise Exception('Failed to create device')
 
     def __repr__(self):
         return 'SparkWebsocket({})'.format(self.wss_url)
