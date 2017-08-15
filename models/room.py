@@ -128,24 +128,43 @@ class SparkRoom(SparkBase):
         return self._teamId
 
     @property
-    def messages(self):
-        return SparkContainer(self.session, SparkMessage,
-                              params=self._message_params(),
-                              parent=self)
+    def message_params(self):
+        ''' Retuns URL paramaters for /messages/
 
-    @property
-    def members(self):
-        return SparkContainer(self.session, SparkMembership,
-                              params={'roomId': self.id},
-                              parent=self)
+            Sets the `roomId` filter and if the session owner is a bot,
+            the `mentionedPeople` filter is set to `me`
 
-    def _message_params(self):
+            :getter: url paramaters
+            :type: dict
+        '''
         data = {'roomId': self.id}
         if self.session.is_bot and self.type == 'group':
             data['mentionedPeople'] = 'me'
         return data
 
-    def send_message(self, text):
+    @property
+    def messages(self):
+        ''' Messages with in the Cisco Spark Room which are accessible
+
+            :getter: a generator like object of messages in the room
+            :type: `SparkContainer` of `SparkMessage` items
+        '''
+        return SparkContainer(self.session, SparkMessage,
+                              params=self.message_params,
+                              parent=self)
+
+    @property
+    def members(self):
+        ''' Members of the Cisco Spark Room
+
+            :getter: a generator like object of members of the room
+            :type: `SparkContainer` of `SparkPeople` items
+        '''
+        return SparkContainer(self.session, SparkMembership,
+                              params={'roomId': self.id},
+                              parent=self)
+
+    def send_message(self, text, file=None):
         ''' Send a message to the room
 
             :param text: Markdown formatted text to send in message
@@ -153,8 +172,7 @@ class SparkRoom(SparkBase):
 
             :return: None
         '''
-        print(f'Sending {text} to {self.id}')
-        self.session.send_message(text, room_id=self.id)
+        self.session.send_message(text, room_id=self.id, file=file)
         return
 
     def add_person_by_id(self, person, moderator=False):

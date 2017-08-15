@@ -2,9 +2,11 @@
 
 import os
 import logging
+import mimetypes
 from time import sleep
 
 import requests
+from requests_toolbelt import MultipartEncoder
 
 from .models.room import SparkRoom
 from .models.team import SparkTeam
@@ -73,6 +75,16 @@ class SparkSession(requests.Session):
         if root in SPARK_PATHS:
             return SPARK_API_BASE + path
         return path
+
+    def __send_file(self, file, data):
+        filetype = mimetypes.guess_type(file)[0]
+        fname = os.path.abspath(file).rsplit(os.sep)[-1]
+        data.update({'files': (fname, open(file, 'rb'), filetype)})
+        multipart = MultipartEncoder(fields=data)
+        self.post('messages',
+                  headers={'Content-type': multipart.content_type},
+                  data=multipart)
+        return
 
     # Response session hooks
     def _retry_after_hook(self, response, *args, **kwargs):
@@ -207,7 +219,8 @@ class SparkSession(requests.Session):
                      text,
                      room_id=None,
                      person_id=None,
-                     person_email=None):
+                     person_email=None,
+                     file=None):
         '''Send a Cisco Spark message
 
             :param text: Markdown formatted message body
@@ -221,6 +234,8 @@ class SparkSession(requests.Session):
             :type person_id: str
             :param person_email: Sets the `toPersonEmailAddress` property
             :type person_id: str
+            :param file: Path to file to upload
+            :type file: str
 
             :return: None
             :raises ValueError: when none of 'room_id', 'person_id',
@@ -250,11 +265,18 @@ class SparkSession(requests.Session):
                 split_idx = 7000
             data = {'markdown': text[:split_idx]}
             data.update(base_data)
-            self.post('messages', json=data)
+            if file:
+                self.__send_file(file, data)
+                file = None
+            else:
+                self.post('messages', json=data)
             text = text[split_idx:]
         else:
             data = {'markdown': text}
             data.update(base_data)
+            if file:
+                self.__send_file(file, data)
+                return
             self.post('messages', json=data)
         return
 

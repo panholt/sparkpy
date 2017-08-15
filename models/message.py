@@ -1,4 +1,5 @@
 from .base import SparkBase
+from .file import SparkFile
 from ..constants import SPARK_API_BASE
 from ..utils.time import ts_to_dt
 
@@ -121,8 +122,7 @@ class SparkMessage(SparkBase):
             :getter: `list` of urls
             :type: list
         '''
-
-        return self._files
+        return [SparkFile(self._session, file) for file in self._files]
 
     @property
     def room(self):
