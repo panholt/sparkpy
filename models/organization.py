@@ -1,45 +1,41 @@
+# -*- coding: utf-8 -*-
+
 from .base import SparkBase
-from ..constants import SPARK_API_BASE
-from ..utils.time import ts_to_dt
+from .time import SparkTime
 
 
 class SparkOrganization(SparkBase):
 
     ''' Cisco Spark Organization Model
 
-        :param session: SparkSession object
-        :type session: `SparkSession`
         :param \**kwargs: All standard Spark API properties for a Organization
     '''
 
-    API_BASE = f'{SPARK_API_BASE}organizations/'
+    API_BASE = 'https://api.ciscospark.com/v1/organizations/'
 
-    def __init__(self, session, id, displayName, created):
+    def __init__(self, *args, **kwargs):
+        if args:
+            super().__init__(args[0], path='organizations', **kwargs)
+        else:
+            super().__init__(path='organizations', **kwargs)
 
-        super().__init__(session, id, 'organizations')
-        self._displayName = displayName
-        self._created = created
-
-    @property
-    def displayName(self):
-        ''' Org display name
-
-            :getter: Gets the `displayName` of the org
-            :type: string
-        '''
-        return self._displayName
+    def update():
+        raise NotImplemented(f'{self} is readonly')
 
     @property
-    def created(self):
-        ''' Org creation time
-
-            :getter: returns datetime object of org creation time
-            :type: datetime.datetime
-        '''
-        return ts_to_dt(self._created)
-
-    def delete(self):
-            raise NotImplemented
+    def properties(self):
+        return {'id': {'type': str,
+                       'optional': False,
+                       'mutable': False},
+                'displayName': {'type': str,
+                                'optional': False,
+                                'mutable': False},
+                'created': {'type': SparkTime,
+                            'optional': False,
+                            'mutable': False}}
 
     def __repr__(self):
-        return f'SparkOrganization({self.id})'
+            return f'SparkOrganization("{self.id}")'
+
+    def __str__(self):
+            return f'SparkOrganization({self.displayName})'

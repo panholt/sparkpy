@@ -1,66 +1,196 @@
-from abc import ABC
-from ..exceptions.spark_exceptions import SparkException
-from ..constants import SPARK_API_BASE
+import base64
+from urllib.parse import urlparse
+from abc import ABC, abstractproperty, abstractmethod
+from ..session import SparkSession
 from ..utils.uuid import is_api_id, is_uuid, uuid_to_api_id
+from ..models.time import SparkTime
 
 
-class SparkBase(ABC):
+class SparkBase(ABC, object):
 
-    ''' Cisco Spark Base Class
-
-        `==` and `!=` operators overridden to compare to `id`
-
-        :param session: SparkSession object
-        :type session: `SparkSession`
-        :param id: Spark object `id`
-        :type id: str
-        :param path: Spark API path
-        :type id: str
-        :param parent: Spark parent object
-        :type parent: str
-    '''
-
-    def __init__(self, session, _id, path, parent=None):
-        self._id = _id
+    def __init__(self, *args, id='', path='', parent=None, **kwargs):
+        self._id = id
+        self._uuid = None
         self._path = path
-        self._session = session
+        self._parent = parent
+        self._loaded = False
+        self._fetched_at = None
+        if args:
+            self._load_from_id(*args)
+        else:
+            self._url = None
+            self._load_data(kwargs)
 
     @property
     def id(self):
-        ''' Spark object `id`
-
-            :getter: Gets the object `id`
-            :type: string
-        '''
         return self._id
+
+    @id.setter
+    def id(self, val):
+        if val.startswith('Y2lzY29zcGFyazovL'):
+            self._id = val
+        return
+
+    @property
+    def loaded(self):
+        return self._loaded
+
+    @loaded.setter
+    def loaded(self, val):
+        self._loaded = bool(val)
+        return
+
+    @property
+    def fetched_at(self):
+        return self._fetched_at
+
+    @fetched_at.setter
+    def fetched_at(self, val):
+        self._fetched_at = val
+        return
+
+    @property
+    def uuid(self):
+        return self._uuid
 
     @property
     def path(self):
-        ''' Spark API path
-
-            :getter: Gets the path
-            :type: string
-        '''
         return self._path
 
     @property
     def url(self):
-        ''' Spark API url
+        return f'https://api.ciscospark.com/v1/{self.path}/{self.id}'
 
-            :getter: Gets the url
-            :type: string
+    @property
+    def lastActivity(self):
+        if self._lastActivity:
+            return SparkTime(self._lastActivity)
+
+    @lastActivity.setter
+    def lastActivity(self, val):
+        self._lastActivity = val
+        return
+
+    @property
+    def created(self):
+        if self._created:
+            return SparkTime(self._created)
+
+    @created.setter
+    def created(self, val):
+        self._created = val
+        return
+
+    @abstractproperty
+    def properties(self):
+        ''' Return a list of properties
+            for the parent class
         '''
-        return f'{SPARK_API_BASE}{self.path}/{self.id}'
+        return []
+
+    @abstractmethod
+    def update(self, key, value):
+        pass
+
+    def _fetch_data(self):
+        with SparkSession() as s:
+            resp = s.get(self.url)
+            if resp.status_code == 200:
+                self._load_data(resp.json())
+
+    def _load_data(self, data):
+        ''' Load the data provided as **kwargs
+            From the properties defined in self.properties
+        '''
+        setter = super().__setattr__
+        for key in self.properties.keys():
+            setter(key, data.get(key, False))
+        setter('_loaded', True)
+        setter('_fetched_at', SparkTime())
+        return
+
+    def _load_from_id(self, _id):
+        ''' Processes the arg if provided.
+
+            Sets self.id and self.path
+
+            :param _id: If uuid is provided then
+                        the spark apis will be queried in an attempt
+                        to determine the proper type.
+            :type _id: str
+        '''
+
+        assert isinstance(_id, str)
+        # API IDs start with this (base64 encoded cisco://)
+        if _id.startswith('Y2lzY29zcGFyazovL'):
+            self._id = _id
+            # Avoid padding errors from base64
+            while not len(_id) % 2 == 0:
+                _id += '='
+            url = urlparse(base64.b64decode(_id)).decode()
+            self._uuid = url.path.split('/')[-1]
+            self._path = url.path.split('/')[1].lower()
+        else:
+            # See if its a uuid
+            for path in ('messages', 'rooms', 'people',
+                         'memberships', 'webhooks',
+                         'teams', 'teams/memberships',
+                         'organizations', 'licenses'):
+                self.path = path
+                self._fetch_data()
+                if self._loaded:
+                    self._uuid = _id
+                    return
+            else:
+                raise ValueError('Spark API ID or a UUIDv4 string required')
+
+        return
 
     def delete(self):
         ''' Delete the Spark API object
 
+            Override to raise NotImplemented if
+            the parent class does not have a delete method
+
         :return: None
         :raises: `SparkException`
         '''
-        response = self.spark.delete(self.url)
-        if response.status_code != 204:
-            raise SparkException(response)
+        with SparkSession() as s:
+            response = s.delete(self.url)
+            if response.status_code != 204:
+                # TODO Exceptions
+                raise Exception()
+
+    def __getattribute__(self, name):
+        getter = super().__getattribute__
+        try:
+            return getter(name)
+        except AttributeError:
+            if self.properties.get(name):
+                prop = self.properties[name]
+                self._fetch_data()
+                try:
+                    return prop['type'](getter(name))
+                except AttributeError:
+                    if prop['optional']:
+                        return prop['type']()
+                    else:
+                        raise Exception(f'{name} is required on {self}')
+            else:
+                raise AttributeError(f'{self} has no attribute "{name}"')
+        else:
+            return getter(name)
+
+    def __setattr__(self, key, value):
+        setter = super().__setattr__
+        if self.properties.get(key):
+            if not self.loaded:
+                self._fetch_data()
+            if self.properties[key]['mutable']:
+                self.update(**{key: value})
+            else:
+                raise AttributeError(f'{self}.{key} is read only')
+        setter(key, value)
 
     def __eq__(self, other):
         if is_api_id(other):

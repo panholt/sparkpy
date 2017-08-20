@@ -6,5 +6,9 @@
 .. moduleauthor:: Paul Anholt <panholt@gmail.com>
 '''
 
-
+import logging
+from .models import *
 from .session import SparkSession
+from ._utils import create_room, create_team, send_message
+
+logging.basicConfig(filename='sparkpy.log', filemode='w', level=logging.DEBUG)

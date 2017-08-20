@@ -3,6 +3,7 @@
 import re
 from collections import deque
 from ..utils.uuid import is_api_id, is_uuid, uuid_to_api_id
+from ..session import SparkSession
 
 
 class SparkContainer(object):
@@ -27,8 +28,7 @@ class SparkContainer(object):
 
     _length_map = {}
 
-    def __init__(self, session, cls, params={}, parent=None):
-        self._session = session
+    def __init__(self, cls, params={}, parent=None):
         self._cls = cls
         self._params = params
         self._parent = parent
@@ -52,7 +52,9 @@ class SparkContainer(object):
 
     @property
     def _key(self):
-        return f'{self.parent or self._session}:{self.cls}'
+        if self.parent:
+            return f'{self.parent.id}:{self.cls}'
+        return f'{self.cls}'
 
     def find(self, key, value, re_flags=None):
         ''' For every item within the container
@@ -88,27 +90,27 @@ class SparkContainer(object):
                 yield item
 
     def __make_iter(self):
-        response = self._session.get(self._cls.API_BASE, params=self.params)
-        _next = response.links.get('next', {}).get('url')
-        buffer = deque(response.json()['items'])
-        count = 0
-        _max_count = self.__class__._length_map.get(self._key, 0)
+        with SparkSession() as s:
+            response = s.get(self._cls.API_BASE, params=self.params)
+            _next = response.links.get('next', {}).get('url')
+            buffer = deque(response.json()['items'])
+            count = 0
+            _max_count = self.__class__._length_map.get(self._key, 0)
 
-        while buffer:
-            count += 1
-            if count > _max_count:
-                self.__class__._length_map[self._key] = count
-            if self.parent:
-                yield self._cls(self._session,
-                                parent=self.parent,
-                                **buffer.popleft())
-            else:
-                yield self._cls(self._session, **buffer.popleft())
+            while buffer:
+                count += 1
+                if count > _max_count:
+                    self.__class__._length_map[self._key] = count
+                if self.parent:
+                    yield self._cls(parent=self.parent,
+                                    **buffer.popleft())
+                else:
+                    yield self._cls(parent=self.parent, **buffer.popleft())
 
-            if not buffer and _next:
-                response = self._session.get(_next)
-                _next = response.links.get('next', {}).get('url')
-                buffer.extend(response.json()['items'])
+                if not buffer and _next:
+                    response = s.get(_next)
+                    _next = response.links.get('next', {}).get('url')
+                    buffer.extend(response.json()['items'])
 
     def __iter__(self):
         return self.__make_iter()
@@ -151,7 +153,9 @@ class SparkContainer(object):
             if is_uuid(key):
                 key = uuid_to_api_id(key)
             if is_api_id(key):
-                return self._session.get(f'rooms/{key}')
+                with SparkSession() as s:
+                    resp = s.get(f'{self.cls.API_BASE}{key}')
+                    return self.cls(parent=self.parent, **resp.json())
             else:
                 raise TypeError('Key must be a uuid or Spark API ID')
 
@@ -160,11 +164,11 @@ class SparkContainer(object):
             raise ValueError(f'{self} requires an int or {self.cls.path}.id')
 
     def __len__(self):
-        if self.__class__._length_map.get(self.cls):
-            return self.__class__._length_map[self._key]
+        if self.__class__._length_map.get(self._key):
+            return self.__class__._length_map.get(self._key, 0)
         else:
             list(self.__make_iter())
-            return self.__class__._length_map[self._key]
+            return self.__class__._length_map.get(self._key, 0)
 
     def __repr__(self):
         return f'SparkContainer({self.cls})'
