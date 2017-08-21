@@ -1,5 +1,6 @@
 from .base import SparkBase
 from .time import SparkTime
+from .message import SparkMessage
 from .membership import SparkMembership
 from .container import SparkContainer
 from ..session import SparkSession
@@ -63,6 +64,21 @@ class SparkRoom(SparkBase):
                               parent=self)
 
     @property
+    def messages(self):
+        ''' Messages in the Cisco Spark Room
+
+            :getter: a generator like object of members of the room
+            :type: `SparkContainer` of `SparkPeople` items
+        '''
+        return SparkContainer(SparkMessage,
+                              params=self.message_params,
+                              parent=self)
+
+    @property
+    def link(self):
+        return f'http://web.ciscospark.com/rooms/{self.uuid}/chat'
+
+    @property
     def message_params(self):
         ''' Retuns URL paramaters for /messages/
 
@@ -73,7 +89,7 @@ class SparkRoom(SparkBase):
             :type: dict
         '''
         data = {'roomId': self.id}
-        if self.session.is_bot and self.type == 'group':
+        if self.parent.is_bot and self.type == 'group':
             data['mentionedPeople'] = 'me'
         return data
 
@@ -85,8 +101,7 @@ class SparkRoom(SparkBase):
 
             :return: None
         '''
-        with SparkSession() as s:
-            s.send_message(text, room_id=self.id, file=file)
+        self.parent.send_message(text, room_id=self.id, file=file)
         return
 
     def add_member(self, *args, email='', moderator=False):
@@ -109,7 +124,7 @@ class SparkRoom(SparkBase):
             data['isModerator'] = moderator
 
         with SparkSession() as s:
-            s.post('memberships', json=data)
+            s.post(self.API_BASE, json=data)
         return
 
     def remove_member(self, *args, email=''):

@@ -1,15 +1,13 @@
-import base64
-from urllib.parse import urlparse
 from abc import ABC, abstractproperty, abstractmethod
 from ..session import SparkSession
-from ..utils.uuid import is_api_id, is_uuid, uuid_to_api_id
 from ..models.time import SparkTime
+from ..utils import decode_api_id, is_uuid, is_api_id, uuid_to_api_id
 
 
 class SparkBase(ABC, object):
 
-    def __init__(self, *args, id='', path='', parent=None, **kwargs):
-        self._id = id
+    def __init__(self, *args, path='', parent=None, **kwargs):
+        self._id = kwargs.get('id')
         self._uuid = None
         self._path = path
         self._parent = parent
@@ -18,8 +16,13 @@ class SparkBase(ABC, object):
         if args:
             self._load_from_id(*args)
         else:
-            self._url = None
-            self._load_data(kwargs)
+            if self.id:
+                _id = decode_api_id(self.id)
+                self._uuid = _id['uuid']
+                self._path = _id['path']
+                self._load_data(kwargs)
+            else:
+                raise ValueError('A valid Spark ID is required')
 
     @property
     def id(self):
@@ -56,6 +59,10 @@ class SparkBase(ABC, object):
     @property
     def path(self):
         return self._path
+
+    @property
+    def parent(self):
+        return self._parent
 
     @property
     def url(self):
@@ -104,7 +111,7 @@ class SparkBase(ABC, object):
         '''
         setter = super().__setattr__
         for key in self.properties.keys():
-            setter(key, data.get(key, False))
+            setter(key, data.get(key))
         setter('_loaded', True)
         setter('_fetched_at', SparkTime())
         return
@@ -120,17 +127,12 @@ class SparkBase(ABC, object):
             :type _id: str
         '''
 
-        assert isinstance(_id, str)
-        # API IDs start with this (base64 encoded cisco://)
         if _id.startswith('Y2lzY29zcGFyazovL'):
-            self._id = _id
-            # Avoid padding errors from base64
-            while not len(_id) % 2 == 0:
-                _id += '='
-            url = urlparse(base64.b64decode(_id)).decode()
-            self._uuid = url.path.split('/')[-1]
-            self._path = url.path.split('/')[1].lower()
-        else:
+            _id = decode_api_id(_id)
+            self._uuid = _id['uuid']
+            self._path = _id['path']
+            self._id = _id['id']
+        elif is_uuid(_id):
             # See if its a uuid
             for path in ('messages', 'rooms', 'people',
                          'memberships', 'webhooks',

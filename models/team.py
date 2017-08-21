@@ -86,6 +86,10 @@ class SparkTeam(SparkBase):
         return
 
     @property
+    def link(self):
+        return f'https://web.ciscospark.com/teams/{self.id}'
+
+    @property
     def members(self):
         '''SparkContainer:`SparkTeamMembership`
            Generator of members of the team.'''

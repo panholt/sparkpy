@@ -7,8 +7,7 @@
 '''
 
 import logging
-from .models import *
-from .session import SparkSession
-from ._utils import create_room, create_team, send_message
+from .spark import Spark
+
 
 logging.basicConfig(filename='sparkpy.log', filemode='w', level=logging.DEBUG)

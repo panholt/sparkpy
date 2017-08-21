@@ -2,7 +2,7 @@
 
 import re
 from collections import deque
-from ..utils.uuid import is_api_id, is_uuid, uuid_to_api_id
+from ..utils import is_api_id, is_uuid, uuid_to_api_id
 from ..session import SparkSession
 
 
