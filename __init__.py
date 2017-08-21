@@ -6,5 +6,8 @@
 .. moduleauthor:: Paul Anholt <panholt@gmail.com>
 '''
 
+import logging
+from .spark import Spark
 
-from .session import SparkSession
+
+logging.basicConfig(filename='sparkpy.log', filemode='w', level=logging.DEBUG)

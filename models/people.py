@@ -1,105 +1,82 @@
+# -*- coding: utf-8 -*-
+
 from .base import SparkBase
-from ..utils.time import ts_to_dt
-from ..constants import SPARK_API_BASE
+from .time import SparkTime
+from ..session import SparkSession
 
 
 class SparkPerson(SparkBase):
 
-    API_BASE = f'{SPARK_API_BASE}people/'
+    API_BASE = 'https://api.ciscospark.com/v1/people/'
 
-    def __init__(self,
-                 spark,
-                 id,
-                 emails,
-                 displayName,
-                 avatar,
-                 orgId,
-                 created,
-                 type,
-                 firstName=None,  # ----!Optional properties
-                 lastName=None,
-                 nickName=None,
-                 lastActivity=None,
-                 status=None,
-                 licenses=[],
-                 roles=[],
-                 timezone=None,
-                 invitePending=False,
-                 loginEnabled=True):
-
-        super().__init__(id, 'people')
-        self.spark = spark
-        self._emails = emails
-        self._displayName = displayName
-        self._firstName = firstName
-        self._lastName = lastName
-        self._nickName = nickName
-        self._avatar = avatar
-        self._orgId = orgId
-        self._created = created
-        self._lastActivity = lastActivity
-        self._status = status
-        self._type = type
-        self._licenses = licenses
-        self._roles = roles
-        self._timezone = timezone
-        self._invitePending = invitePending
-        self._loginEnabled = loginEnabled
+    def __init__(self, *args, **kwargs):
+        if args:
+            super().__init__(args[0], path='people', **kwargs)
+        else:
+            super().__init__(path='people', **kwargs)
+        self._email = None
 
     @property
-    def emails(self):
+    def email(self):
         # Emails is returned as an array but will only ever have one entry
         # For now anyway
-        return self._emails[0]
+        if not self._email:
+            self._email = self.emails[0]
+        return self._email
 
     @property
-    def displayName(self):
-        return self._displayName
-
-    @property
-    def firstName(self):
-        return self._firstName
-
-    @property
-    def lastName(self):
-        return self._lastName
-
-    @property
-    def nickName(self):
-        return self._nickName
-
-    @property
-    def avatar(self):
-        return self._avatar
-
-    @property
-    def orgId(self):
-        return self._orgId
-
-    @property
-    def licenses(self):
-        return self._licenses
-
-    @property
-    def created(self):
-        return ts_to_dt(self._created)
-
-    @property
-    def lastActivity(self):
-        if self._lastActivity:
-            return ts_to_dt(self._lastActivity)
-
-    @property
-    def status(self):
-        return self._status
-
-    @property
-    def type(self):
-        return self._type
-
-    def delete(self):
-        self.spark.delete(self.url)
-        return
+    def properties(self):
+        return {'id': {'type': str,
+                       'optional': False,
+                       'mutable': False},
+                'emails': {'type': list,
+                           'optional': False,
+                           'mutable': False},
+                'displayName': {'type': str,
+                                'optional': False,
+                                'mutable': True},
+                'avatar': {'type': str,
+                           'optional': True,
+                           'mutable': True},
+                'orgId': {'type': str,
+                          'optional': False,
+                          'mutable': False},
+                'created': {'type': SparkTime,
+                            'optional': False,
+                            'mutable': False},
+                'type': {'type': str,
+                         'optional': False,
+                         'mutable': False},
+                'firstName': {'type': str,
+                              'optional': True,
+                              'mutable': True},
+                'lastName': {'type': str,
+                             'optional': True,
+                             'mutable': True},
+                'nickName': {'type': str,
+                             'optional': True,
+                             'mutable': True},
+                'lastActivity': {'type': SparkTime,
+                                 'optional': True,
+                                 'mutable': False},
+                'status': {'type': str,
+                           'optional': True,
+                           'mutable': False},
+                'licenses': {'type': str,
+                             'optional': True,
+                             'mutable': True},
+                'roles': {'type': str,
+                          'optional': True,
+                          'mutable': False},
+                'timezone': {'type': str,
+                             'optional': True,
+                             'mutable': False},
+                'invitePending': {'type': bool,
+                                  'optional': True,
+                                  'mutable': False},
+                'loginEnabled': {'type': bool,
+                                 'optional': True,
+                                 'mutable': False}}
 
     def update(self,
                emails=None,
@@ -112,10 +89,14 @@ class SparkPerson(SparkBase):
                licenses=None):
 
         updates = {k: v for k, v in locals().items() if k != 'self' and v}
-        existing_data = self.get(self.url).json()
-        data = existing_data.update(updates)
-        self.spark.put(self.url, json=data)
+        with SparkSession() as s:
+            existing_data = s.get(self.url).json()
+            existing_data.update(updates)
+            s.put(self.url, json=existing_data)
         return
 
-    def __repr__(self):
-        return f'SparkPerson{self.id})'
+    # def __repr__(self):
+    #     return f"SparkPerson('{self.id}')"
+
+    # def __str__(self):
+    #     return f"SparkPerson('{self.displayName}')"

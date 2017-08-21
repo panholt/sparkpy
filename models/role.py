@@ -1,34 +1,37 @@
+# -*- coding: utf-8 -*-
+
 from .base import SparkBase
-from ..constants import SPARK_API_BASE
 
 
 class SparkRole(SparkBase):
 
     ''' Cisco Spark Role Model
 
-        :param session: SparkSession object
-        :type session: `SparkSession`
-        :param \**kwargs: All standard Spark API properties for a Role
+        :param \**kwargs: All standard Spark API properties for a Message
     '''
 
-    API_BASE = f'{SPARK_API_BASE}roles/'
+    API_BASE = 'https://api.ciscospark.com/v1/roles/'
 
-    def __init__(self, session, id, name):
+    def __init__(self, *args, **kwargs):
+        if args:
+            super().__init__(args[0], path='roles', **kwargs)
+        else:
+            super().__init__(path='roles', **kwargs)
 
-        super().__init__(session, id, 'roles')
-        self._name = name
+    def update():
+        raise NotImplemented(f'{self} is readonly')
 
-        @property
-        def name(self):
-            ''' Role name
+    @property
+    def properties(self):
+        return {'id': {'type': str,
+                       'optional': False,
+                       'mutable': False},
+                'name': {'type': str,
+                         'optional': False,
+                         'mutable': False}}
 
-            :getter: Gets the name of the role
-            :type: string
-            '''
-            return self._name
+    def __repr__(self):
+            return f'SparkRole("{self.id}")'
 
-        def delete(self):
-            raise NotImplemented
-
-        def __repr__(self):
-            return f'SparkRole{self.id})'
+    def __str__(self):
+            return f'SparkRole({self.name})'

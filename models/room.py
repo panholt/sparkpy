@@ -1,131 +1,82 @@
+from .base import SparkBase
+from .time import SparkTime
 from .message import SparkMessage
 from .membership import SparkMembership
-from .people import SparkPerson
 from .container import SparkContainer
-from ..constants import SPARK_API_BASE
-from ..utils.time import ts_to_dt
-from ..utils.uuid import is_api_id
-from .base import SparkBase
+from ..session import SparkSession
 
 
 class SparkRoom(SparkBase):
 
-    ''' Cisco Spark Room Model
+    API_BASE = 'https://api.ciscospark.com/v1/rooms/'
 
-        :param session: SparkSession object
-        :type session: `SparkSession`
-        :param parent: The parent spark team if present
-        :param \**kwargs: All standard Spark API properties for a Room
-    '''
-
-    API_BASE = f'{SPARK_API_BASE}rooms/'
-
-    def __init__(self,
-                 session,
-                 id,
-                 title,
-                 type,
-                 isLocked,
-                 lastActivity,
-                 created,
-                 creatorId,
-                 sipAddress=None,
-                 teamId=None,
-                 parent=None):
-
-        super().__init__(session, id, 'rooms', parent=parent)
-        self.session = session
-        self._title = title
-        self._type = type
-        self._isLocked = isLocked
-        self._lastActivity = lastActivity
-        self._created = created
-        self._creatorId = creatorId
-        self._sipAddress = sipAddress
-        self._teamId = teamId
+    def __init__(self, *args, **kwargs):
+        if args:
+            super().__init__(args[0], path='rooms', **kwargs)
+        else:
+            super().__init__(path='rooms', **kwargs)
 
     @property
-    def title(self):
-        ''' Room title
+    def properties(self):
+        return {'id': {'type': str,
+                       'optional': False,
+                       'mutable': False},
+                'title': {'type': str,
+                          'optional': False,
+                          'mutable': True},
+                'type': {'type': str,
+                         'optional': False,
+                         'mutable': False},
+                'isLocked': {'type': bool,
+                             'optional': False,
+                             'mutable': False},
+                'lastActivity': {'type': SparkTime,
+                                 'optional': False,
+                                 'mutable': False},
+                'created': {'type': SparkTime,
+                            'optional': False,
+                            'mutable': False},
+                'creatorId': {'type': str,
+                              'optional': False,
+                              'mutable': False},
+                'sipAddress': {'type': str,
+                               'optional': True,
+                               'mutable': False},
+                'teamId': {'type': str,
+                           'optional': True,
+                           'mutable': False}}
 
-            :getter: Gets the room title
-            :setter: Sets the room title
-            :type: string
-        '''
-        return self._title
-
-    @title.setter
-    def title(self, value):
-        assert isinstance(value, str)
-        assert len(value) > 0
-        self.session.put(self.path, json={'title': value})
-        self._title = value
+    def update(self, key, value):
+        if key == 'title' and len(value):
+            with SparkSession() as s:
+                s.put(self.url, json={key: value})
         return
 
     @property
-    def type(self):
-        ''' Room type
+    def members(self):
+        ''' Members of the Cisco Spark Room
 
-            Can be either 'direct' or 'group'
-
-            :getter: Gets the room type
-            :type: string
+            :getter: a generator like object of members of the room
+            :type: `SparkContainer` of `SparkPeople` items
         '''
-        return self._type
+        return SparkContainer(SparkMembership,
+                              params={'roomId': self.id},
+                              parent=self)
 
     @property
-    def isLocked(self):
-        ''' Is room locked
+    def messages(self):
+        ''' Messages in the Cisco Spark Room
 
-            :getter: returns `True` if room is locked
-            :type: bool
+            :getter: a generator like object of members of the room
+            :type: `SparkContainer` of `SparkPeople` items
         '''
-        return self._isLocked
+        return SparkContainer(SparkMessage,
+                              params=self.message_params,
+                              parent=self)
 
     @property
-    def lastActivity(self):
-        ''' Last activity time
-
-            :getter: returns datetime object of last activity time
-            :type: datetime.datetime
-        '''
-        return ts_to_dt(self._lastActivity)
-
-    @property
-    def created(self):
-        ''' Room created time
-
-            :getter: returns datetime object of room creation time
-            :type: datetime.datetime
-        '''
-        return ts_to_dt(self._created)
-
-    @property
-    def creatorId(self):
-        ''' Creater id of room
-
-            :getter: the API id of the creater of the room
-            :type: str
-        '''
-        return self._creatorId
-
-    @property
-    def sipAddress(self):
-        ''' The SIP address of the room
-
-            :getter: the SIP address of the room if present
-            :type: str
-        '''
-        return self._sipAddress
-
-    @property
-    def teamId(self):
-        ''' Team id of the room if room is part of a team
-
-            :getter: `teamId` property
-            :type: str
-        '''
-        return self._teamId
+    def link(self):
+        return f'http://web.ciscospark.com/rooms/{self.uuid}/chat'
 
     @property
     def message_params(self):
@@ -138,31 +89,9 @@ class SparkRoom(SparkBase):
             :type: dict
         '''
         data = {'roomId': self.id}
-        if self.session.is_bot and self.type == 'group':
+        if self.parent.is_bot and self.type == 'group':
             data['mentionedPeople'] = 'me'
         return data
-
-    @property
-    def messages(self):
-        ''' Messages with in the Cisco Spark Room which are accessible
-
-            :getter: a generator like object of messages in the room
-            :type: `SparkContainer` of `SparkMessage` items
-        '''
-        return SparkContainer(self.session, SparkMessage,
-                              params=self.message_params,
-                              parent=self)
-
-    @property
-    def members(self):
-        ''' Members of the Cisco Spark Room
-
-            :getter: a generator like object of members of the room
-            :type: `SparkContainer` of `SparkPeople` items
-        '''
-        return SparkContainer(self.session, SparkMembership,
-                              params={'roomId': self.id},
-                              parent=self)
 
     def send_message(self, text, file=None):
         ''' Send a message to the room
@@ -172,31 +101,11 @@ class SparkRoom(SparkBase):
 
             :return: None
         '''
-        self.session.send_message(text, room_id=self.id, file=file)
+        self.parent.send_message(text, room_id=self.id, file=file)
         return
 
-    def add_person_by_id(self, person, moderator=False):
-        ''' Add a person to the room by id
-
-            :param person: personId or  `SparkPerson` to add to room
-            :type person: str or `SparkPerson` object
-            :param moderator: Default: False, Make person a moderator of room
-            :type moderator: bool
-
-            :return: None
-        '''
-        if isinstance(person, SparkPerson):
-            person = person.id
-        elif not is_api_id(person):
-            raise ValueError('Person must be a SparkPerson object \
-                              or Spark API ID')
-        self.session.post('memberships', json={'roomId': self.id,
-                                               'personId': person,
-                                               'isModerator': moderator})
-        return
-
-    def add_person_by_email(self, email, moderator=False):
-        ''' Add a person to the room by email address
+    def add_member(self, *args, email='', moderator=False):
+        ''' Add a person to the room
 
             :param email: email address of person to add
             :type email: str
@@ -205,49 +114,48 @@ class SparkRoom(SparkBase):
 
             :return: None
         '''
-        assert '@' in email
-        self.session.post('memberships', json={'roomId': self.id,
-                                               'personEmail': email,
-                                               'isModerator': moderator})
+        data = {'roomId': self.id}
+        if args:
+            # TODO Type checking
+            data['personId'] = args[0]
+        if '@' in email:
+            data['personEmail'] = email
+        if moderator:
+            data['isModerator'] = moderator
+
+        with SparkSession() as s:
+            s.post(self.API_BASE, json=data)
         return
 
-    def remove_person_by_id(self, person):
-        ''' Remove a person to the room by id
-
-            :param person: personId or  `SparkPerson` to add to room
-            :type person: str or `SparkPerson` object
-
-            :return: None
-        '''
-        if not isinstance(person, SparkPerson) or not is_api_id(person):
-            raise ValueError('Person must be a SparkPerson object or \
-                             Spark API ID')
-        for member in self.members.filtered(lambda x: x == person):
-            member.delete()
-        return
-
-    def remove_person_by_email(self, email):
-        ''' Remove a person to the room by email address
+    def remove_member(self, *args, email=''):
+        ''' Add a person to the room
 
             :param email: email address of person to add
+            :type email: str
+            :param moderator: Default: False, Make person a moderator of room
+            :type moderator: bool
 
             :return: None
         '''
-        if '@' not in email:
-            raise ValueError('Must provide valid email address')
-        for member in self.members.filtered(lambda x: x.personEmail == email):
-            member.delete()
+
+        if args:
+            for member in self.members.filtered(lambda
+                                                x: x.personId == args[0]):
+                member.delete()
+        elif '@' in email:
+            for member in self.members.filtered(lambda
+                                                x: x.personEmail == email):
+                member.delete()
         return
 
-    def remove_all_people(self):
+    def remove_all_members(self):
         ''' Remove all people from the room leaving this account
 
             :return: None
         '''
         for member in self.members.filtered(lambda x: x != self.session.id):
             member.delete()
-        self.delete()
         return
 
     def __repr__(self):
-        return f'SparkRoom({self.id})'
+        return f"SparkRoom('{self.id}')"

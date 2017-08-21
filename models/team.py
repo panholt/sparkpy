@@ -1,122 +1,113 @@
+# -*- coding: utf-8 -*-
+
 from .base import SparkBase
-from .container import SparkContainer
-from .room import SparkRoom
-from .people import SparkPerson
+from .time import SparkTime
 from .membership import SparkTeamMembership
-from ..constants import SPARK_API_BASE
-from ..utils.time import ts_to_dt
-from ..utils.uuid import is_api_id
+from .container import SparkContainer
+from ..session import SparkSession
+
 
 class SparkTeam(SparkBase):
 
-    ''' SparkTeam object reprsents a Team in Cisco Spark
+    ''' Cisco Spark Message Model
 
-    If the class has public attributes, they may be documented here
-    in an ``Attributes`` section and follow the same formatting as a
-    function's ``Args`` section. Alternatively, attributes may be documented
-    inline with the attribute's declaration (see __init__ method below).
-
-    Properties created with the ``@property`` decorator should be documented
-    in the property's getter method.
-
-    Attributes:
-        attr1 (str): Description of `attr1`.
-        attr2 (:obj:`int`, optional): Description of `attr2`.
-
+        :param \**kwargs: All standard Spark API properties for a Message
     '''
 
-    API_BASE = f'{SPARK_API_BASE}teams/'
+    API_BASE = 'https://api.ciscospark.com/v1/teams/'
 
-    def __init__(self, spark, id, name, created, creatorId):
-        super().__init__(id, 'teams')
-        self.spark = spark
-        self._name = name
-        self._created = created
-        self._creatorId = creatorId
+    def __init__(self, *args, **kwargs):
+        if args:
+            super().__init__(args[0], path='teams', **kwargs)
+        else:
+            super().__init__(path='teams', **kwargs)
 
-    @property
-    def name(self):
-        '''str: The name of the Cisco Spark Team.
-                 Setter will invoke the API 
+    def create_subroom(self, title):
+        with SparkSession() as s:
+            s.create_room(title, team_id=self.id)
+
+    def update(self, key, value):
+        if key == 'name' and len(value):
+            with SparkSession() as s:
+                s.put(self.url, json={key: value})
+        return
+
+    def add_member(self, *args, email='', moderator=False):
+        ''' Add a person to the team
+
+            :param email: email address of person to add
+            :type email: str
+            :param moderator: Default: False, Make person a moderator of room
+            :type moderator: bool
+
+            :return: None
         '''
-        return self._name
+        data = {'teamId': self.id}
+        if args:
+            # TODO Type checking
+            data['personId'] = args[0]
+        if '@' in email:
+            data['personEmail'] = email
+        if moderator:
+            data['isModerator'] = moderator
 
-    @name.setter
-    def name(self, val):
-        self.spark.put(self.url, json={'name': val})
-        self._val = val
+        with SparkSession() as s:
+            s.post('team/memberships', json=data)
+        return
+
+    def remove_member(self, *args, email=''):
+        ''' Add a person to the team
+
+            :param email: email address of person to add
+            :type email: str
+            :param moderator: Default: False, Make person a moderator of room
+            :type moderator: bool
+
+            :return: None
+        '''
+
+        if args:
+            for member in self.members.filtered(lambda
+                                                x: x.personId == args[0]):
+                member.delete()
+        elif '@' in email:
+            for member in self.members.filtered(lambda
+                                                x: x.personEmail == email):
+                member.delete()
+        return
+
+    def remove_all_members(self):
+        ''' Remove all people from the room leaving this account
+
+            :return: None
+        '''
+        for member in self.members.filtered(lambda x: x != self.session.id):
+            member.delete()
         return
 
     @property
-    def created(self):
-        '''datetime.datetime: A datetime object representing 
-           the time that the team was created
-        '''
-        return ts_to_dt(self._created)
-
-    @property
-    def creatorId(self):
-        '''str: The ID of the creator of the room'''
-        return self._creatorId
-
-    @property
-    def subrooms(self):
-        '''SparkContainer:`SparkRoom`
-           Generator of subrooms belonging to the team.'''
-
-        return SparkContainer(self.spark, SparkRoom,
-                              params={'teamId': self.id,
-                                      'sortBy': 'id'})
+    def link(self):
+        return f'https://web.ciscospark.com/teams/{self.id}'
 
     @property
     def members(self):
         '''SparkContainer:`SparkTeamMembership`
            Generator of members of the team.'''
 
-        return SparkContainer(self.spark, SparkTeamMembership,
+        return SparkContainer(SparkTeamMembership,
                               params={'teamId': self.id})
 
-    def delete(self):
-        self.spark.delete(self.url)
-
-    def create_subroom(self, title):
-        return self.spark.create_room(title, team_id=self.id)
-
-    def add_person_by_id(self, person, moderator=False):
-        if isinstance(person, SparkPerson):
-            person = person.id
-        elif not is_api_id(person):
-            raise ValueError('Person must be a SparkPerson object \
-                              or Spark API ID')
-        self.spark.post('team/memberships', json={'teamId': self.id,
-                                                  'personId': person,
-                                                  'isModerator': moderator})
-        return
-
-    def add_person_by_email(self, email, moderator=False):
-        assert '@' in email
-        self.spark.post('team/memberships', json={'teamId': self.id,
-                                                  'personEmail': email,
-                                                  'isModerator': moderator})
-        return
-
-    def remove_person_by_id(self, person):
-        if isinstance(person, SparkPerson):
-            person = person.id
-        elif not is_api_id(person):
-            raise ValueError('Person must be a SparkPerson object or \
-                             Spark API ID')
-        for member in self.members:
-            if member.id == person:
-                member.delete()
-        return
-
-    def remove_person_by_email(self, email, moderator=False):
-        assert '@' in email
-        for member in self.members:
-            if member.personEmail == email:
-                member.delete()
-        return
-
-    def __repr__(self):
-        return f'SparkTeam({self.id})'
+    @property
+    def properties(self):
+        return {'id': {'type': str,
+                       'optional': False,
+                       'mutable': False},
+                'name': {'type': str,
+                         'optional': False,
+                         'mutable': True},
+                'creatorId': {'type': str,
+                              'optional': False,
+                              'mutable': False},
+                'created': {'type': SparkTime,
+                            'optional': False,
+                            'mutable': False}}
