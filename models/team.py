@@ -4,6 +4,7 @@ from .base import SparkBase
 from .time import SparkTime
 from .membership import SparkTeamMembership
 from .container import SparkContainer
+from .room import SparkRoom
 from ..session import SparkSession
 
 
@@ -32,7 +33,7 @@ class SparkTeam(SparkBase):
                 s.put(self.url, json={key: value})
         return
 
-    def add_member(self, *args, email='', moderator=False):
+    def add_member(self, _id, email='', moderator=False):
         ''' Add a person to the team
 
             :param email: email address of person to add
@@ -45,7 +46,7 @@ class SparkTeam(SparkBase):
         data = {'teamId': self.id}
         if args:
             # TODO Type checking
-            data['personId'] = args[0]
+            data['personId'] = _id
         if '@' in email:
             data['personEmail'] = email
         if moderator:
@@ -55,7 +56,7 @@ class SparkTeam(SparkBase):
             s.post('team/memberships', json=data)
         return
 
-    def remove_member(self, *args, email=''):
+    def remove_member(self, _id, email=''):
         ''' Add a person to the team
 
             :param email: email address of person to add
@@ -68,7 +69,7 @@ class SparkTeam(SparkBase):
 
         if args:
             for member in self.members.filtered(lambda
-                                                x: x.personId == args[0]):
+                                                x: x.personId == _id):
                 member.delete()
         elif '@' in email:
             for member in self.members.filtered(lambda
@@ -95,7 +96,18 @@ class SparkTeam(SparkBase):
            Generator of members of the team.'''
 
         return SparkContainer(SparkTeamMembership,
-                              params={'teamId': self.id})
+                              params={'teamId': self.id},
+                              parent=self)
+
+    @property
+    def subrooms(self):
+        '''SparkContainer:`SparkRoom`
+           Generator of members of the team.'''
+
+        return SparkContainer(SparkRoom,
+                              params={'teamId': self.id,
+                                      'sortBy': 'id'},
+                              parent=self)
 
     @property
     def properties(self):

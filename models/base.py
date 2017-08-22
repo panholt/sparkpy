@@ -134,8 +134,9 @@ class SparkBase(ABC, object):
         setter = super().__setattr__
         # Check and warn for any extra kwargs
         interlopers = data.keys() - self.properties.keys()
-        if interlopers:
-            log.warning('Extra kwargs provided: %s', ', '.join(interlopers))
+        for interloper in interlopers:
+            log.warning('Extra kwarg provided: %s value: %s',
+                        interloper, interlopers[interloper])
         # Set all the provided kwargs
         for key, properties in self.properties.items():
             value = data.get(key)
@@ -147,7 +148,8 @@ class SparkBase(ABC, object):
                 raise TypeError(f'{self} needs keyword-only argument {key}')
 
         # Check if all required properties are set
-        if all([key in data for key in self.properties if not self.properties[key]['optional']]):
+        if all([key in data for key in self.properties
+                if not self.properties[key]['optional']]):
 
             # Set the _loaded flag to True and timestamp it
             setter('_loaded', True)
@@ -226,8 +228,7 @@ class SparkBase(ABC, object):
         try:
             attr = getter(name)
         except AttributeError:
-            # Ignore this for now
-            pass
+            attr = None
         # Return the attribute if it exists
         if attr is not None:  # Don't swallow bools here
             return attr
