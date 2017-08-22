@@ -56,22 +56,22 @@ class SparkContainer(object):
             return f'{self.parent.id}:{self.cls}'
         return f'{self.cls}'
 
-    def find(self, key, value, re_flags=None):
+    def find(self, key, regexp, re_flags=None):
         ''' For every item within the container
             search the value of a given key for a provided query
 
             :param key: Search key
             :type key: str
-            :param value: Search value, accepts regular expressions
-            :type value: str
+            :param regexp: Search string, accepts regular expressions
+            :type regexp: str
             :param re_flags: (Optional) Regular expression flags
             :type re_flags: re.flags
 
             :yields: Any items in the continer matching the search.
         '''
         if re_flags:
-            pattern = re.compile(value, re_flags)
-        pattern = re.compile(value)
+            pattern = re.compile(regexp, re_flags)
+        pattern = re.compile(regexp)
 
         for item in self.__make_iter():
             if hasattr(item, key) and pattern.search(getattr(item, key)):
@@ -153,9 +153,7 @@ class SparkContainer(object):
             if is_uuid(key):
                 key = uuid_to_api_id(key)
             if is_api_id(key):
-                with SparkSession() as s:
-                    resp = s.get(f'{self.cls.API_BASE}{key}')
-                    return self.cls(parent=self.parent, **resp.json())
+                return self.cls(key, parent=self.parent)
             else:
                 raise TypeError('Key must be a uuid or Spark API ID')
 

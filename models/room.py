@@ -28,7 +28,7 @@ class SparkRoom(SparkBase):
                          'optional': False,
                          'mutable': False},
                 'isLocked': {'type': bool,
-                             'optional': False,
+                             'optional': True,
                              'mutable': False},
                 'lastActivity': {'type': SparkTime,
                                  'optional': False,

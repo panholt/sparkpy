@@ -1,10 +1,10 @@
+from .utils import is_api_id
 from .session import SparkSession
 from .models.room import SparkRoom
 from .models.people import SparkPerson
 from .models.team import SparkTeam
 from .models.webhook import SparkWebhook
 from .models.container import SparkContainer
-from .utils import is_api_id
 
 
 class Spark(object):
@@ -54,7 +54,7 @@ class Spark(object):
                 :type title: str
 
                 :return: SparkTeam
-            '''
+        '''
 
         data = {'title': title}
         if team_id:
@@ -166,7 +166,7 @@ class Spark(object):
                      person_id=None,
                      person_email=None,
                      file=None):
-        '''Send a Cisco Spark message
+        ''' Send a Cisco Spark message
 
             :param text: Markdown formatted message body
                          If message is longer than 7,000 characters

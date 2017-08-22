@@ -41,7 +41,7 @@ class SparkSession(requests.Session):
     def _retry_after_hook(self, response, *args, **kwargs):
         if response.status_code == 429:
             sleep_time = int(response.headers.get('Retry-After', 15))
-            log.warning('Received a 429 Response. Backing off for %ss',
+            log.warning('Received a 429 Response. Backing off for %s seconds',
                         sleep_time)
             sleep(sleep_time)
             return self.send(response.request)
