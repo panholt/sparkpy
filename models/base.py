@@ -10,6 +10,10 @@ log = logging.getLogger('sparkpy.base')
 
 class SparkBase(ABC, object):
 
+    @abstractproperty
+    def properties(cls):
+        pass
+
     def __init__(self, *args, path='', parent=None, **kwargs):
         self._id = kwargs.get('id')
         self._uuid = None
@@ -142,14 +146,14 @@ class SparkBase(ABC, object):
             value = data.get(key)
             if value:
                 setter(key, value)
-            elif properties['optional']:
+            elif properties.optional:
                 setter(key, None)
             else:
                 raise TypeError(f'{self} needs keyword-only argument {key}')
 
         # Check if all required properties are set
         if all([key in data for key in self.properties
-                if not self.properties[key]['optional']]):
+                if not self.properties[key].optional]):
 
             # Set the _loaded flag to True and timestamp it
             setter('_loaded', True)
@@ -253,7 +257,7 @@ class SparkBase(ABC, object):
         if self.properties.get(key):
             if not self.loaded:
                 self._fetch_data()
-            if self.properties[key]['mutable']:
+            if self.properties[key].mutable:
                 self.update(**{key: value})
             else:
                 raise AttributeError(f'{self}.{key} is read only')
@@ -289,3 +293,31 @@ class SparkBase(ABC, object):
 
     def __hash__(self):
         return hash(self.id)
+
+
+class SparkProperty(object):
+
+    def __init__(self, prop, mutable=False, cls=None, optional=False):
+        self._prop = prop
+        self._mutable = mutable
+        self._cls = cls
+        self._optional = optional
+
+    @property
+    def prop(self):
+        return self._prop
+
+    @property
+    def mutable(self):
+        return self._mutable
+
+    @property
+    def cls(self):
+        return self._cls
+
+    @property
+    def optional(self):
+        return self._optional
+
+    def __repr__(self):
+        return f'SparkProperty("{self.prop}")'

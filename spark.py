@@ -1,38 +1,56 @@
+from os import environ
 from .utils import is_api_id
 from .session import SparkSession
 from .models.room import SparkRoom
-from .models.people import SparkPerson
 from .models.team import SparkTeam
+from .models.people import SparkPerson
 from .models.webhook import SparkWebhook
+from json.decoder import JSONDecodeError
 from .models.container import SparkContainer
 
 
 class Spark(object):
 
-    def __init__(self):
+    def __init__(self, token=None):
         self._id = None
-        self._is_bot = None
+        self._me = None
+        self._is_bot = True
+        if token:
+            self._session = SparkSession(token)
+        else:
+            try:
+                self._session = SparkSession(environ['SPARK_TOKEN'])
+            except KeyError as e:
+                # TODO exceptions
+                raise Exception('Please insert token')
 
     @property
     def id(self):
         '''Returns the `personId` property of the bearer_token's owner
            :type: string '''
         if self._id is None:
-            with SparkSession() as s:
-                data = s.get('https://api.ciscospark.com/v1/people/me').json()
-                self._id = data['id']
-                self._is_bot = data['type'] == 'bot'
+            self._fetch_self()
         return self._id
 
     @property
+    def session(self):
+        '''  session handler'''
+        return self._session
+
+    @property
+    def me(self):
+        ''' `SparkPerson` of owner
+        '''
+        return self._me
+
+    @property
     def is_bot(self):
-        '''Returns `True` if bearer_token's owner is a bot
-           type: bool '''
+        '''
+            Returns `True` if bearer_token's owner is a bot
+            type: bool
+        '''
         if self._is_bot is None:
-            with SparkSession() as s:
-                data = s.get('https://api.ciscospark.com/v1/people/me').json()
-                self._id = data['id']
-                self._is_bot = data['type'] == 'bot'
+            self._fetch_self()
         return self._is_bot
 
     @property
@@ -46,6 +64,22 @@ class Spark(object):
     @property
     def webhooks(self):
         return SparkContainer(SparkWebhook, parent=self)
+
+    def _fetch_self(self):
+        resp = self.session.get('https://api.ciscospark.com/v1/people/me')
+        if resp.status_code == 200:
+            try:
+                data = resp.json()
+            except JSONDecodeError:
+                # TODO exceptions
+                raise Exception('Failed to retrieve self details')
+
+            self._id = data['id']
+            self._me = SparkPerson(parent=self, **data)
+            self._is_bot = self.me.type == 'bot'
+        else:
+            # TODO exceptions
+            raise Exception(f'Invalid status code {r.status_code}: {r.text}')
 
     def create_room(self, title, team_id=None):
         '''Create a Cisco Spark room
@@ -204,6 +238,7 @@ class Spark(object):
             raise ValueError('Must provide either a roomId, personId, \
                              or email address')
 
+        # Chunk and send the message
         with SparkSession() as s:
             while len(text) > 7000:  # Technically 7439
                 split_idx = text.rfind('\n', 1, 6999)
@@ -211,8 +246,10 @@ class Spark(object):
                     split_idx = 7000
                 data = {'markdown': text[:split_idx]}
                 data.update(base_data)
+                # Send any files waiting
                 if file:
                     s.send_file(file, data)
+                    # TODO make this a list or something
                     file = None
                 else:
                     s.post('https://api.ciscospark.com/v1/messages', json=data)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .base import SparkBase
+from .base import SparkBase  # , SparkProperty
 from .time import SparkTime
 
 
@@ -13,13 +13,42 @@ class SparkWebhook(SparkBase):
         :param \**kwargs: All standard Spark API properties for a Webhook
     '''
 
-    API_BASE = 'https://api.ciscospark.com/v1/webhooks/'
+    # Class level constants
+    @property
+    def API_BASE(self):
+        return 'https://api.ciscospark.com/v1/webhooks/'
+
+    @property
+    def WEBHOOK_RESOURCES(self):
+        return ['memberships', 'messages', 'rooms', 'all']
+
+    @property
+    def WEBHOOK_EVENTS(self):
+        return ['created', 'updated', 'deleted', 'all']
+
+    @property
+    def WEBHOOK_FILTERS(self):
+        return {'memberships': ['roomId',
+                                'personId',
+                                'personEmail',
+                                'isModerator'],
+                'messages': ['roomId',
+                             'roomType',
+                             'personId',
+                             'personEmail',
+                             'mentionedPeople',
+                             'hasFiles'],
+                'rooms': ['type',
+                          'isLocked']}
+
+    # id = SparkProperty('id')
+    # name = SparkProperty('name')
+    # targetUrl = SparkProperty('targetUrl')
+    # event = SparkProperty('event')
+
 
     def __init__(self, *args, **kwargs):
-        if args:
-            super().__init__(args[0], path='webhooks', **kwargs)
-        else:
-            super().__init__(path='webhooks', **kwargs)
+        super().__init__(*args, path='webhooks', **kwargs)
 
     def update():
         raise NotImplemented(f'{self} is readonly')

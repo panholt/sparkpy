@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .base import SparkBase
+from .base import SparkBase, SparkProperty
 from .time import SparkTime
 from .membership import SparkTeamMembership
 from .container import SparkContainer
@@ -17,21 +17,23 @@ class SparkTeam(SparkBase):
 
     API_BASE = 'https://api.ciscospark.com/v1/teams/'
 
-    def __init__(self, *args, **kwargs):
-        if args:
-            super().__init__(args[0], path='teams', **kwargs)
-        else:
-            super().__init__(path='teams', **kwargs)
+    properties = {'id': SparkProperty('id'),
+                  'name': SparkProperty('name', mutable=True),
+                  'creatorId': SparkProperty('creatorId'),
+                  'created': SparkProperty('created', cls=SparkTime)}
 
-    def create_subroom(self, title):
-        with SparkSession() as s:
-            s.create_room(title, team_id=self.id)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, path='teams', **kwargs)
 
     def update(self, key, value):
         if key == 'name' and len(value):
             with SparkSession() as s:
                 s.put(self.url, json={key: value})
         return
+
+    def create_subroom(self, title):
+        with SparkSession() as s:
+            s.create_room(title, team_id=self.id)
 
     def add_member(self, _id, email='', moderator=False):
         ''' Add a person to the team
@@ -109,17 +111,9 @@ class SparkTeam(SparkBase):
                                       'sortBy': 'id'},
                               parent=self)
 
-    @property
-    def properties(self):
-        return {'id': {'type': str,
-                       'optional': False,
-                       'mutable': False},
-                'name': {'type': str,
-                         'optional': False,
-                         'mutable': True},
-                'creatorId': {'type': str,
-                              'optional': False,
-                              'mutable': False},
-                'created': {'type': SparkTime,
-                            'optional': False,
-                            'mutable': False}}
+    def __str__(self):
+        return f'SparkTeam("{self.name}")'
+
+    def __repr__(self):
+        return f'SparkTeam("{self.id}")'
+

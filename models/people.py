@@ -1,82 +1,65 @@
 # -*- coding: utf-8 -*-
 
-from .base import SparkBase
+from .base import SparkBase, SparkProperty
 from .time import SparkTime
 from ..session import SparkSession
 
 
 class SparkPerson(SparkBase):
 
+    # | Start of class attributes |------------------------------------------ |
     API_BASE = 'https://api.ciscospark.com/v1/people/'
+    properties = {'id': SparkProperty('id'),
+                  'emails': SparkProperty('emails'),
+                  'displayName': SparkProperty('displayName',
+                                               mutable=True),
+                  'avatar': SparkProperty('avatar',
+                                          optional=True,
+                                          mutable=True),
+                  'orgId': SparkProperty('orgId'),
+                  'created': SparkProperty('created',
+                                           cls=SparkTime),
+                  'type': SparkProperty('type'),
+                  'firstName': SparkProperty('firstName',
+                                             optional=True,
+                                             mutable=True),
+                  'lastName': SparkProperty('lastName',
+                                            optional=True,
+                                            mutable=True),
+                  'nickName': SparkProperty('nickName',
+                                            optional=True,
+                                            mutable=True),
+                  'lastActivity': SparkProperty('lastActivity',
+                                                optional=True,
+                                                cls=SparkTime),
+                  'status': SparkProperty('status', optional=True),
+                  'licenses': SparkProperty('licenses',
+                                            optional=True,
+                                            mutable=True),
+                  'roles': SparkProperty('roles',
+                                         optional=True),
+                  'timezone': SparkProperty('timezone',
+                                            optional=True),
+                  'invitePending': SparkProperty('invitePending',
+                                                 optional=True,
+                                                 cls=bool),
+                  'loginEnabled': SparkProperty('loginEnabled',
+                                                optional=True,
+                                                cls=bool)}
 
     def __init__(self, *args, **kwargs):
-        if args:
-            super().__init__(args[0], path='people', **kwargs)
-        else:
-            super().__init__(path='people', **kwargs)
+        super().__init__(*args, path='people', **kwargs)
+
+        # Start of instance attributes |--------------------------------------|
         self._email = None
 
     @property
     def email(self):
-        # Emails is returned as an array but will only ever have one entry
-        # For now anyway
+        # Emails is returned as an array but will
+        # only ever have one entry.. or now anyway
         if not self._email:
             self._email = self.emails[0]
         return self._email
-
-    @property
-    def properties(self):
-        return {'id': {'type': str,
-                       'optional': False,
-                       'mutable': False},
-                'emails': {'type': list,
-                           'optional': False,
-                           'mutable': False},
-                'displayName': {'type': str,
-                                'optional': False,
-                                'mutable': True},
-                'avatar': {'type': str,
-                           'optional': True,
-                           'mutable': True},
-                'orgId': {'type': str,
-                          'optional': False,
-                          'mutable': False},
-                'created': {'type': SparkTime,
-                            'optional': False,
-                            'mutable': False},
-                'type': {'type': str,
-                         'optional': False,
-                         'mutable': False},
-                'firstName': {'type': str,
-                              'optional': True,
-                              'mutable': True},
-                'lastName': {'type': str,
-                             'optional': True,
-                             'mutable': True},
-                'nickName': {'type': str,
-                             'optional': True,
-                             'mutable': True},
-                'lastActivity': {'type': SparkTime,
-                                 'optional': True,
-                                 'mutable': False},
-                'status': {'type': str,
-                           'optional': True,
-                           'mutable': False},
-                'licenses': {'type': str,
-                             'optional': True,
-                             'mutable': True},
-                'roles': {'type': str,
-                          'optional': True,
-                          'mutable': False},
-                'timezone': {'type': str,
-                             'optional': True,
-                             'mutable': False},
-                'invitePending': {'type': bool,
-                                  'optional': True,
-                                  'mutable': False},
-                'loginEnabled': {'type': bool,
-                                 'optional': True,
-                                 'mutable': False}}
 
     def update(self,
                emails=None,
@@ -95,8 +78,8 @@ class SparkPerson(SparkBase):
             s.put(self.url, json=existing_data)
         return
 
-    # def __repr__(self):
-    #     return f"SparkPerson('{self.id}')"
+    def __repr__(self):
+        return f"SparkPerson('{self.id}')"
 
-    # def __str__(self):
-    #     return f"SparkPerson('{self.displayName}')"
+    def __str__(self):
+        return f"SparkPerson('{self.displayName}')"
