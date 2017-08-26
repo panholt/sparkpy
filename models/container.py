@@ -47,6 +47,10 @@ class SparkContainer(object):
         return self._parent
 
     @property
+    def session(self):
+        return self._session
+
+    @property
     def _key(self):
         if self.parent:
             return f'{self.parent.id}:{self.cls}'
@@ -82,7 +86,7 @@ class SparkContainer(object):
                 yield item
 
     def __make_iter(self):
-        response = self.session.get(self._cls.api_base, params=self.params)
+        response = self.session.get(self._cls.API_BASE, params=self.params)
         _next = response.links.get('next', {}).get('url')
         buffer = deque(response.json()['items'])
         count = 0
@@ -150,7 +154,7 @@ class SparkContainer(object):
 
         # Fail!
         else:
-            raise ValueError(f'{self} requires an int or {self.cls.path}.id')
+            raise ValueError(f'{self} requires an int or {self.cls}.id')
 
     def __len__(self):
         if self.__class__._length_map.get(self._key):

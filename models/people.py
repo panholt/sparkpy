@@ -8,8 +8,8 @@ from ..session import SparkSession
 class SparkPerson(SparkBase):
 
     # | Start of class attributes |------------------------------------------ |
-    api_base = 'https://api.ciscospark.com/v1/people/'
-    properties = {'id': SparkProperty('id'),
+    API_BASE = 'https://api.ciscospark.com/v1/people/'
+    PROPERTIES = {'id': SparkProperty('id'),
                   'emails': SparkProperty('emails'),
                   'displayName': SparkProperty('displayName',
                                                mutable=True),

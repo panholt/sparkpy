@@ -15,20 +15,14 @@ class SparkTeam(SparkBase):
         :param \**kwargs: All standard Spark API properties for a Message
     '''
 
-    api_base = 'https://api.ciscospark.com/v1/teams/'
-
-    properties = {'id': SparkProperty('id'),
+    API_BASE = 'https://api.ciscospark.com/v1/teams/'
+    PROPERTIES = {'id': SparkProperty('id'),
                   'name': SparkProperty('name', mutable=True),
                   'creatorId': SparkProperty('creatorId'),
                   'created': SparkProperty('created', cls=SparkTime)}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='teams', **kwargs)
-        self._parent = kwargs.get('parent')
-
-    @property
-    def parent(self):
-        return self._parent
 
     def update(self, key, value):
         if key == 'name' and len(value):

@@ -1,4 +1,4 @@
-from .base import SparkBase
+from .base import SparkBase, SparkProperty
 
 
 class SparkLicense(SparkBase):
@@ -8,31 +8,17 @@ class SparkLicense(SparkBase):
         :param \**kwargs: All standard Spark API properties for a License
     '''
 
-    api_base = 'https://api.ciscospark.com/v1/licenses/'
+    API_BASE = 'https://api.ciscospark.com/v1/licenses/'
+    PROPERTIES = {'id': SparkProperty('id'),
+                  'name': SparkProperty('name'),
+                  'totalUnits': SparkProperty('totalUnits'),
+                  'consumedUnits': SparkProperty('consumedUnits')}
 
     def __init__(self, *args, **kwargs):
-        if args:
-            super().__init__(args[0], path='licenses', **kwargs)
-        else:
-            super().__init__(path='licenses', **kwargs)
+        super().__init__(*args, path='licenses', **kwargs)
 
     def update():
         raise NotImplemented(f'{self} is readonly')
-
-    @property
-    def properties(self):
-        return {'id': {'type': str,
-                       'optional': False,
-                       'mutable': False},
-                'name': {'type': str,
-                         'optional': False,
-                         'mutable': False},
-                'totalUnits': {'type': int,
-                               'optional': False,
-                               'mutable': False},
-                'consumedUnits': {'type': int,
-                                  'optional': False,
-                                  'mutable': False}}
 
     def __repr__(self):
             return f'SparkLicense("{self.id}")'

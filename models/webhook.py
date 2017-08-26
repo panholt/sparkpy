@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .base import SparkBase  # , SparkProperty
+from .base import SparkBase, SparkProperty
 from .time import SparkTime
 
 
@@ -13,87 +13,48 @@ class SparkWebhook(SparkBase):
         :param \**kwargs: All standard Spark API properties for a Webhook
     '''
 
-    # Class level constants
-    @property
-    def api_base(self):
-        return 'https://api.ciscospark.com/v1/webhooks/'
+    # | Start of class attributes |-------------------------------------------|
 
-    @property
-    def WEBHOOK_RESOURCES(self):
-        return ['memberships', 'messages', 'rooms', 'all']
+    API_BASE = 'https://api.ciscospark.com/v1/webhooks/'
+    WEBHOOK_RESOURCES = ['memberships', 'messages', 'rooms', 'all']
+    WEBHOOK_EVENTS = ['created', 'updated', 'deleted', 'all']
+    WEBHOOK_FILTERS = {'memberships': ['roomId',
+                                       'personId',
+                                       'personEmail',
+                                       'isModerator'],
+                       'messages': ['roomId',
+                                    'roomType',
+                                    'personId',
+                                    'personEmail',
+                                    'mentionedPeople',
+                                    'hasFiles'],
+                       'rooms': ['type',
+                                 'isLocked']}
+    PROPERTIES = {'id': SparkProperty('id'),
+                  'name': SparkProperty('name', mutable=True),
+                  'targetUrl': SparkProperty('targetUrl', mutable=True),
+                  'event': SparkProperty('event'),
+                  'resource': SparkProperty('resource'),
+                  'filter': SparkProperty('filter', optional=True),
+                  'secret': SparkProperty('secret', optional=True),
+                  'orgId': SparkProperty('orgId', optional=True),
+                  'createdBy': SparkProperty('createdBy', optional=True),
+                  'appId': SparkProperty('appId', optional=True),
+                  'ownedBy': SparkProperty('ownedBy', optional=True),
+                  'status': SparkProperty('status', optional=True),
+                  'created': SparkProperty('created', optional=True)}
 
-    @property
-    def WEBHOOK_EVENTS(self):
-        return ['created', 'updated', 'deleted', 'all']
-
-    @property
-    def WEBHOOK_FILTERS(self):
-        return {'memberships': ['roomId',
-                                'personId',
-                                'personEmail',
-                                'isModerator'],
-                'messages': ['roomId',
-                             'roomType',
-                             'personId',
-                             'personEmail',
-                             'mentionedPeople',
-                             'hasFiles'],
-                'rooms': ['type',
-                          'isLocked']}
-
-    # id = SparkProperty('id')
-    # name = SparkProperty('name')
-    # targetUrl = SparkProperty('targetUrl')
-    # event = SparkProperty('event')
-
-
+    # | Start of instance attributes |----------------------------------------|
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='webhooks', **kwargs)
 
-    def update():
-        raise NotImplemented(f'{self} is readonly')
-
-    @property
-    def properties(self):
-        return {'id': {'type': str,
-                       'optional': False,
-                       'mutable': False},
-                'name': {'type': str,
-                         'optional': False,
-                         'mutable': False},
-                'targetUrl': {'type': str,
-                              'optional': False,
-                              'mutable': False},
-                'event': {'type': str,
-                          'optional': False,
-                          'mutable': False},
-                'orgId': {'type': str,
-                          'optional': False,
-                          'mutable': False},
-                'createdBy': {'type': str,
-                              'optional': False,
-                              'mutable': False},
-                'appId': {'type': str,
-                          'optional': False,
-                          'mutable': False},
-                'ownedBy': {'type': str,
-                            'optional': False,
-                            'mutable': False},
-                'status': {'type': str,
-                           'optional': False,
-                           'mutable': False},
-                'created': {'type': SparkTime,
-                            'optional': False,
-                            'mutable': False},
-                'filter': {'type': str,
-                           'optional': True,
-                           'mutable': False},
-                'secret': {'type': str,
-                           'optional': True,
-                           'mutable': False}}
+    def update(self, name, targetUrl):
+        data = {'name': name, 'targetUrl': targetUrl}
+        self.parent.session.put(self.API_BASE, json=data)
+        return
 
     def __repr__(self):
-            return f'SparkLicense("{self.id}")'
+            return f'SparkWebhook("{self.id}")'
 
     def __str__(self):
-            return f'SparkLicense({self.name})'
+            return f'SparkWebhook({self.name})'

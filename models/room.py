@@ -9,9 +9,8 @@ from ..session import SparkSession
 class SparkRoom(SparkBase):
 
     # | Start of class attributes |-------------------------------------------|
-    api_base = 'https://api.ciscospark.com/v1/rooms/'
-
-    properties = {'id': SparkProperty('id'),
+    API_BASE = 'https://api.ciscospark.com/v1/rooms/'
+    PROPERTIES = {'id': SparkProperty('id'),
                   'title': SparkProperty('title', mutable=True),
                   'type': SparkProperty('type'),
                   'isLocked': SparkProperty('islocked',
@@ -29,7 +28,6 @@ class SparkRoom(SparkBase):
     # | Start of instance attributes |----------------------------------------|
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='rooms', **kwargs)
-        self._parent = kwargs.get('parent')
 
     def update(self, key, value):
         if key == 'title' and len(value):
@@ -37,10 +35,6 @@ class SparkRoom(SparkBase):
         elif key == 'isLocked':
             raise NotImplemented('isLocked is not implemnted')
         return
-
-    @property
-    def parent(self):
-        return self._parent
 
     @property
     def members(self):
@@ -68,7 +62,7 @@ class SparkRoom(SparkBase):
 
     @property
     def link(self):
-        return f'http://web.ciscospark.com/rooms/{self.uuid}/chat'
+        return f'https://web.ciscospark.com/rooms/{self.uuid}/chat'
 
     @property
     def message_params(self):
@@ -116,7 +110,7 @@ class SparkRoom(SparkBase):
             data['isModerator'] = moderator
 
         with SparkSession() as s:
-            s.post(self.api_base, json=data)
+            s.post(self.API_BASE, json=data)
         return
 
     def remove_member(self, *args, email=''):

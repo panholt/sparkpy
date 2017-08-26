@@ -94,9 +94,10 @@ class Spark(object):
         if team_id:
             assert is_api_id(team_id, 'team')
             data['teamId'] = team_id
-        with SparkSession() as s:
-            room = s.post('rooms', json=data).json()
-        return SparkRoom(**room)
+
+        room = self.session.post('https://api.ciscospark.com/v1/rooms',
+                                 json=data).json()
+        return SparkRoom(parent=self, **room)
 
     def create_one_on_one_room(self, person, message):
         '''Create or send a message to a 1:1 room
@@ -191,8 +192,9 @@ class Spark(object):
         if secret:
             data['secret'] = secret
         with SparkSession() as s:
-            webhook = s.post('webhooks', json=data)
-            return SparkWebhook(**webhook.json())
+            hook = self.session.post('https://api.ciscospark/com/v1/webhooks',
+                                     json=data)
+            return SparkWebhook(**hook.json())
 
     def send_message(self,
                      text,
@@ -248,19 +250,21 @@ class Spark(object):
                 data.update(base_data)
                 # Send any files waiting
                 if file:
-                    s.send_file(file, data)
+                    self.session.send_file(file, data)
                     # TODO make this a list or something
                     file = None
                 else:
-                    s.post('https://api.ciscospark.com/v1/messages', json=data)
+                    self.session.post('https://api.ciscospark.com/v1/messages',
+                                      json=data)
                 text = text[split_idx:]
             else:
                 data = {'markdown': text}
                 data.update(base_data)
                 if file:
-                    s.send_file(file, data)
+                    self.session.send_file(file, data)
                     return
-                s.post('https://api.ciscospark.com/v1/messages', json=data)
+                self.session.post('https://api.ciscospark.com/v1/messages',
+                                  json=data)
             return
 
     def __repr__(self):

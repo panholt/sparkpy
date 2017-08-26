@@ -11,7 +11,15 @@ log = logging.getLogger('sparkpy.base')
 class SparkBase(ABC, object):
 
     @abstractproperty
-    def properties(cls):
+    def API_BASE(self):
+        ''' Returns the base URL for the resource
+        '''
+
+    @abstractproperty
+    def PROPERTIES(self):
+        ''' Return a dict of SparkProperties
+            representing the properties of parent class
+        '''
         pass
 
     def __init__(self, *args, **kwargs):
@@ -20,7 +28,7 @@ class SparkBase(ABC, object):
         self._parent = kwargs.pop('parent', None)
         self._uuid = None
         self._loaded = False
-        self._fetched_at = None
+        self._loaded_at = None
         if args:
             self._load_from_id(*args)
         else:
@@ -53,12 +61,12 @@ class SparkBase(ABC, object):
         return
 
     @property
-    def fetched_at(self):
-        return self._fetched_at
+    def loaded_at(self):
+        return self._loaded_at
 
-    @fetched_at.setter
-    def fetched_at(self, val):
-        self._fetched_at = val
+    @loaded_at.setter
+    def loaded_at(self, val):
+        self._loaded_at = val
         return
 
     @property
@@ -97,13 +105,6 @@ class SparkBase(ABC, object):
         self._created = val
         return
 
-    @abstractproperty
-    def properties(self):
-        ''' Return a list of properties
-            for the parent class
-        '''
-        return []
-
     @abstractmethod
     def update(self, data):
         ''' Parent class must implement this method to accept
@@ -111,7 +112,7 @@ class SparkBase(ABC, object):
 
             :note:
             Parent class must be able to handle updates for any
-            properties defined as mutable in self.properties
+            properties defined as mutable in class.properties
 
             :arg data: A dictionary of updates
             :raises: `ValueError` or `AttributeError`
@@ -132,17 +133,17 @@ class SparkBase(ABC, object):
 
     def _load_data(self, data):
         ''' Load the data provided as **kwargs
-            From the properties defined in self.properties
+            From the properties defined in self.PROPERTIES
         '''
         # keep a clean __setattr__
         setter = super().__setattr__
         # Check and warn for any extra kwargs
-        interlopers = data.keys() - self.properties.keys()
+        interlopers = data.keys() - self.PROPERTIES.keys()
         for interloper in interlopers:
             log.warning('Extra kwarg provided: %s value: %s',
                         interloper, data[interloper])
         # Set all the provided kwargs
-        for key, properties in self.properties.items():
+        for key, properties in self.PROPERTIES.items():
             value = data.get(key)
             if value:
                 setter(key, value)
@@ -152,8 +153,8 @@ class SparkBase(ABC, object):
                 raise TypeError(f'{self} needs keyword-only argument {key}')
 
         # Check if all required properties are set
-        if all([key in data for key in self.properties
-                if not self.properties[key].optional]):
+        if all([key in data for key in self.PROPERTIES
+                if not self.PROPERTIES[key].optional]):
 
             # Set the _loaded flag to True and timestamp it
             setter('_loaded', True)
@@ -212,7 +213,7 @@ class SparkBase(ABC, object):
 
              Calls `self.__getattribute__(name)` and
              if the result is `None` or `AttributeError`, and
-             the `name` is present in `self.properties.keys()` then
+             the `name` is present in `self.PROPERTIES.keys()` then
              query the Cisco Spark API and set the properties.
 
              Then calls `self.__getattribute__(name)` again
@@ -238,26 +239,30 @@ class SparkBase(ABC, object):
             return attr
         # Check if attribute is valid
         try:
-            prop = self.properties[name]
+            prop = self.PROPERTIES[name]
+            # Return optional and empty values
+            if self.loaded and prop.optional:
+                return None
         except KeyError:
             raise AttributeError(f'{self} has no attribute "{name}"')
 
         # Fetch and retry the getter
         try:
+            log.debug('fetching data because of %s', name)
             self._fetch_data()
             return getter(name)
         except AttributeError:
-            if prop['optional']:
+            if prop.optional:
                 return None
             else:
                 raise TypeError(f'{self} needs keyword-only argument {key}')
 
     def __setattr__(self, key, value):
         setter = super().__setattr__
-        if self.properties.get(key):
+        if self.PROPERTIES.get(key):
             if not self.loaded:
                 self._fetch_data()
-            if self.properties[key].mutable:
+            if self.PROPERTIES[key].mutable:
                 self.update(**{key: value})
             else:
                 raise AttributeError(f'{self}.{key} is read only')

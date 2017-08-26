@@ -11,28 +11,16 @@ class SparkOrganization(SparkBase):
         :param \**kwargs: All standard Spark API properties for a Organization
     '''
 
-    api_base = 'https://api.ciscospark.com/v1/organizations/'
+    API_BASE = 'https://api.ciscospark.com/v1/organizations/'
+    PROPERTIES = {'id': SparkProperty('id'),
+                  'name': SparkProperty('name'),
+                  'created': SparkProperty('created', cls=SparkTime)}
 
     def __init__(self, *args, **kwargs):
-        if args:
-            super().__init__(args[0], path='organizations', **kwargs)
-        else:
-            super().__init__(path='organizations', **kwargs)
+        super().__init__(*args, path='organizations', **kwargs)
 
     def update():
         raise NotImplemented(f'{self} is readonly')
-
-    @property
-    def properties(self):
-        return {'id': {'type': str,
-                       'optional': False,
-                       'mutable': False},
-                'displayName': {'type': str,
-                                'optional': False,
-                                'mutable': False},
-                'created': {'type': SparkTime,
-                            'optional': False,
-                            'mutable': False}}
 
     def __repr__(self):
             return f'SparkOrganization("{self.id}")'

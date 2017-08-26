@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .base import SparkBase
+from .base import SparkBase, SparkProperty
 from .time import SparkTime
 from ..session import SparkSession
 
@@ -12,49 +12,25 @@ class SparkMembership(SparkBase):
         :param \**kwargs: All standard Spark API properties for a Message
     '''
 
-    api_base = 'https://api.ciscospark.com/v1/memberships/'
+    API_BASE = 'https://api.ciscospark.com/v1/memberships/'
+    PROPERTIES = {'id': SparkProperty('id'),
+                  'roomId': SparkProperty('roomId'),
+                  'personId': SparkProperty('personId'),
+                  'personEmail': SparkProperty('personEmail'),
+                  'personOrgId': SparkProperty('personOrgId'),
+                  'personDisplayName': SparkProperty('personDisplayName'),
+                  'isModerator': SparkProperty('isModerator', mutable=True),
+                  'isMonitor': SparkProperty('isMonitor'),
+                  'created': SparkProperty('created', cls=SparkTime)}
 
     def __init__(self, *args, **kwargs):
-        if args:
-            super().__init__(args[0], path='memberships', **kwargs)
-        else:
-            super().__init__(path='memberships', **kwargs)
+        super().__init__(*args, path='memberships', **kwargs)
 
     def update(self, key, value):
         if key == 'isModerator':
             with SparkSession() as s:
                 s.put(self.url, json={key: value})
         return
-
-    @property
-    def properties(self):
-        return {'id': {'type': str,
-                       'optional': False,
-                       'mutable': False},
-                'roomId': {'type': str,
-                           'optional': False,
-                           'mutable': False},
-                'personId': {'type': str,
-                             'optional': False,
-                             'mutable': False},
-                'personEmail': {'type': str,
-                                'optional': False,
-                                'mutable': False},
-                'personOrgId': {'type': str,
-                                'optional': False,
-                                'mutable': False},
-                'personDisplayName': {'type': str,
-                                      'optional': False,
-                                      'mutable': False},
-                'isModerator': {'type': bool,
-                                'optional': False,
-                                'mutable': False},
-                'isMonitor': {'type': bool,
-                              'optional': False,
-                              'mutable': False},
-                'created': {'type': SparkTime,
-                            'optional': False,
-                            'mutable': False}}
 
 
 class SparkTeamMembership(SparkBase):
@@ -64,49 +40,24 @@ class SparkTeamMembership(SparkBase):
         :param \**kwargs: All standard Spark API properties for a Message
     '''
 
-    api_base = 'https://api.ciscospark.com/v1/team/memberships/'
+    API_BASE = 'https://api.ciscospark.com/v1/team/memberships/'
+    PROPERTIES = {'id': SparkProperty('id'),
+                  'teamId': SparkProperty('teamId'),
+                  'personId': SparkProperty('personId'),
+                  'personEmail': SparkProperty('personEmail'),
+                  'personOrgId': SparkProperty('personOrgId'),
+                  'personDisplayName': SparkProperty('personDisplayName'),
+                  'isModerator': SparkProperty('isModerator', mutable=True),
+                  'created': SparkProperty('created', cls=SparkTime)}
 
     def __init__(self, *args, **kwargs):
-        if args:
-            super().__init__(args[0], path='team/memberships', **kwargs)
-        else:
-            super().__init__(path='team/memberships', **kwargs)
+        super().__init__(args[0], path='team/memberships', **kwargs)
 
     def update(self, key, value):
         if key == 'isModerator':
             with SparkSession() as s:
                 s.put(self.url, json={key: value})
         return
-
-    @property
-    def properties(self):
-        return {'id': {'type': str,
-                       'optional': False,
-                       'mutable': False},
-                'teamId': {'type': str,
-                           'optional': False,
-                           'mutable': False},
-                'personId': {'type': str,
-                             'optional': False,
-                             'mutable': False},
-                'personEmail': {'type': str,
-                                'optional': False,
-                                'mutable': False},
-                'personOrgId': {'type': str,
-                                'optional': False,
-                                'mutable': False},
-                'personDisplayName': {'type': str,
-                                      'optional': False,
-                                      'mutable': False},
-                'isModerator': {'type': bool,
-                                'optional': False,
-                                'mutable': False},
-                'isMonitor': {'type': bool,
-                              'optional': False,
-                              'mutable': False},
-                'created': {'type': SparkTime,
-                            'optional': False,
-                            'mutable': False}}
 
     def __repr__(self):
         return f'SparkTeamMembership({self.id})'
