@@ -12,7 +12,7 @@ class SparkMembership(SparkBase):
         :param \**kwargs: All standard Spark API properties for a Message
     '''
 
-    API_BASE = 'https://api.ciscospark.com/v1/memberships/'
+    api_base = 'https://api.ciscospark.com/v1/memberships/'
 
     def __init__(self, *args, **kwargs):
         if args:
@@ -64,7 +64,7 @@ class SparkTeamMembership(SparkBase):
         :param \**kwargs: All standard Spark API properties for a Message
     '''
 
-    API_BASE = 'https://api.ciscospark.com/v1/team/memberships/'
+    api_base = 'https://api.ciscospark.com/v1/team/memberships/'
 
     def __init__(self, *args, **kwargs):
         if args:

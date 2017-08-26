@@ -15,7 +15,7 @@ class SparkWebhook(SparkBase):
 
     # Class level constants
     @property
-    def API_BASE(self):
+    def api_base(self):
         return 'https://api.ciscospark.com/v1/webhooks/'
 
     @property

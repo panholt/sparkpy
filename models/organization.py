@@ -11,7 +11,7 @@ class SparkOrganization(SparkBase):
         :param \**kwargs: All standard Spark API properties for a Organization
     '''
 
-    API_BASE = 'https://api.ciscospark.com/v1/organizations/'
+    api_base = 'https://api.ciscospark.com/v1/organizations/'
 
     def __init__(self, *args, **kwargs):
         if args:

@@ -14,11 +14,11 @@ class SparkBase(ABC, object):
     def properties(cls):
         pass
 
-    def __init__(self, *args, path='', parent=None, **kwargs):
-        self._id = kwargs.get('id')
+    def __init__(self, *args, **kwargs):
+        self._id = kwargs['id']
+        self._path = kwargs.pop('path')
+        self._parent = kwargs.pop('parent', None)
         self._uuid = None
-        self._path = path
-        self._parent = parent
         self._loaded = False
         self._fetched_at = None
         if args:
@@ -140,7 +140,7 @@ class SparkBase(ABC, object):
         interlopers = data.keys() - self.properties.keys()
         for interloper in interlopers:
             log.warning('Extra kwarg provided: %s value: %s',
-                        interloper, interlopers[interloper])
+                        interloper, data[interloper])
         # Set all the provided kwargs
         for key, properties in self.properties.items():
             value = data.get(key)

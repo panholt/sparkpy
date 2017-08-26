@@ -12,13 +12,15 @@ class SparkMessage(SparkBase):
         :param \**kwargs: All standard Spark API properties for a Message
     '''
 
-    API_BASE = 'https://api.ciscospark.com/v1/messages/'
+    api_base = 'https://api.ciscospark.com/v1/messages/'
 
     def __init__(self, *args, **kwargs):
-        if args:
-            super().__init__(args[0], path='messages', **kwargs)
-        else:
-            super().__init__(path='messages', **kwargs)
+        self._parent = kwargs.get('parent')
+        super().__init__(*args, path='messages', **kwargs)
+
+    @property
+    def parent(self):
+        return self._parent
 
     def update():
         raise NotImplemented(f'{self} is readonly')

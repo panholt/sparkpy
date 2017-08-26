@@ -8,7 +8,7 @@ class SparkLicense(SparkBase):
         :param \**kwargs: All standard Spark API properties for a License
     '''
 
-    API_BASE = 'https://api.ciscospark.com/v1/licenses/'
+    api_base = 'https://api.ciscospark.com/v1/licenses/'
 
     def __init__(self, *args, **kwargs):
         if args:

@@ -10,7 +10,7 @@ class SparkRole(SparkBase):
         :param \**kwargs: All standard Spark API properties for a Message
     '''
 
-    API_BASE = 'https://api.ciscospark.com/v1/roles/'
+    api_base = 'https://api.ciscospark.com/v1/roles/'
 
     def __init__(self, *args, **kwargs):
         if args:

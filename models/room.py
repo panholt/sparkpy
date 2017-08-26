@@ -1,4 +1,4 @@
-from .base import SparkBase
+from .base import SparkBase, SparkProperty
 from .time import SparkTime
 from .message import SparkMessage
 from .membership import SparkMembership
@@ -8,49 +8,39 @@ from ..session import SparkSession
 
 class SparkRoom(SparkBase):
 
-    API_BASE = 'https://api.ciscospark.com/v1/rooms/'
+    # | Start of class attributes |-------------------------------------------|
+    api_base = 'https://api.ciscospark.com/v1/rooms/'
 
+    properties = {'id': SparkProperty('id'),
+                  'title': SparkProperty('title', mutable=True),
+                  'type': SparkProperty('type'),
+                  'isLocked': SparkProperty('islocked',
+                                            optional=True,
+                                            cls=bool),
+                  'lastActivity': SparkProperty('lastActivity',
+                                                optional=True,
+                                                cls=SparkTime),
+                  'created': SparkProperty('created',
+                                           cls=SparkTime),
+                  'creatorId': SparkProperty('creatorId'),
+                  'sipAddress': SparkProperty('sipAddress', optional=True),
+                  'teamId': SparkProperty('teamId', optional=True)}
+
+    # | Start of instance attributes |----------------------------------------|
     def __init__(self, *args, **kwargs):
-        if args:
-            super().__init__(args[0], path='rooms', **kwargs)
-        else:
-            super().__init__(path='rooms', **kwargs)
-
-    @property
-    def properties(self):
-        return {'id': {'type': str,
-                       'optional': False,
-                       'mutable': False},
-                'title': {'type': str,
-                          'optional': False,
-                          'mutable': True},
-                'type': {'type': str,
-                         'optional': False,
-                         'mutable': False},
-                'isLocked': {'type': bool,
-                             'optional': True,
-                             'mutable': False},
-                'lastActivity': {'type': SparkTime,
-                                 'optional': False,
-                                 'mutable': False},
-                'created': {'type': SparkTime,
-                            'optional': False,
-                            'mutable': False},
-                'creatorId': {'type': str,
-                              'optional': False,
-                              'mutable': False},
-                'sipAddress': {'type': str,
-                               'optional': True,
-                               'mutable': False},
-                'teamId': {'type': str,
-                           'optional': True,
-                           'mutable': False}}
+        super().__init__(*args, path='rooms', **kwargs)
+        self._parent = kwargs.get('parent')
 
     def update(self, key, value):
         if key == 'title' and len(value):
-            with SparkSession() as s:
-                s.put(self.url, json={key: value})
+            self.parent.session.put(self.url, json={key: value})
+        elif key == 'isLocked':
+            raise NotImplemented('isLocked is not implemnted')
         return
+
+    @property
+    def parent(self):
+        return self._parent
 
     @property
     def members(self):
@@ -61,7 +51,8 @@ class SparkRoom(SparkBase):
         '''
         return SparkContainer(SparkMembership,
                               params={'roomId': self.id},
-                              parent=self)
+                              parent=self,
+                              session=self.parent.session)
 
     @property
     def messages(self):
@@ -72,7 +63,8 @@ class SparkRoom(SparkBase):
         '''
         return SparkContainer(SparkMessage,
                               params=self.message_params,
-                              parent=self)
+                              parent=self,
+                              session=self.parent.session)
 
     @property
     def link(self):
@@ -124,7 +116,7 @@ class SparkRoom(SparkBase):
             data['isModerator'] = moderator
 
         with SparkSession() as s:
-            s.post(self.API_BASE, json=data)
+            s.post(self.api_base, json=data)
         return
 
     def remove_member(self, *args, email=''):
