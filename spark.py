@@ -65,6 +65,22 @@ class Spark(object):
     def webhooks(self):
         return SparkContainer(SparkWebhook, parent=self)
 
+    def search_people(self, query, org_id=None, max_=None):
+        params = {}
+        if is_api_id(query, 'people'):
+            params.update({'id'})
+        elif '@' in query:
+            params.update({'email': query})
+        elif isinstance(query, list):
+            params.update({'id': ','.join(query)})
+        else:
+            params.update({'displayName': query})
+        if org_id:
+            params.update({'orgId': org_id})
+        if max_ and isinstance(max_, int):
+            params.update({'max': max_})
+        return SparkContainer(SparkPerson, parent=self, params=params)
+
     def _fetch_self(self):
         resp = self.session.get('https://api.ciscospark.com/v1/people/me')
         if resp.status_code == 200:
@@ -164,30 +180,15 @@ class Spark(object):
 
                 :raises: AssertionError
             '''
-
-        WEBHOOK_RESOURCES = ['memberships', 'messages', 'rooms', 'all']
-        WEBHOOK_EVENTS = ['created', 'updated', 'deleted', 'all']
-        WEBHOOK_FILTERS = {'memberships': ['roomId',
-                                           'personId',
-                                           'personEmail',
-                                           'isModerator'],
-                           'messages': ['roomId',
-                                        'roomType',
-                                        'personId',
-                                        'personEmail',
-                                        'mentionedPeople',
-                                        'hasFiles'],
-                           'rooms': ['type',
-                                     'isLocked']}
-        assert resource in WEBHOOK_RESOURCES
-        assert event in WEBHOOK_EVENTS
+        assert resource in SparkWebhook.WEBHOOK_RESOURCES
+        assert event in SparkWebhook.WEBHOOK_EVENTS
         data = {'name': name,
                 'targetUrl': target_url,
                 'resource': resource,
                 'event': event}
         if filter:
             assert any([filter.starswith(item)
-                        for item in WEBHOOK_FILTERS[resource]])
+                        for item in SparkWebhook.WEBHOOK_FILTERS[resource]])
             data['filter'] = filter
         if secret:
             data['secret'] = secret

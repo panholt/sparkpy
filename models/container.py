@@ -146,7 +146,7 @@ class SparkContainer(object):
         # Dict Style lookups
         elif isinstance(key, str):
             if is_uuid(key):
-                key = uuid_to_api_id(key)
+                key = uuid_to_api_id(key, self.cls.path)
             if is_api_id(key):
                 return self.cls(key, parent=self.parent)
             else:

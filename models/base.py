@@ -272,7 +272,7 @@ class SparkBase(ABC, object):
         if is_api_id(other):
             return self._id == other
         elif is_uuid(other):
-            return uuid_to_api_id(self._path, self._id) == self._id
+            return uuid_to_api_id(self._id, self._path) == self._id
         else:
             return False
 
@@ -280,7 +280,7 @@ class SparkBase(ABC, object):
         if is_api_id(other):
             return self._id != other
         elif is_uuid(other):
-            return uuid_to_api_id(self._path, self._id) != self._id
+            return uuid_to_api_id(self._id, self._path) != self._id
         else:
             return True
 
