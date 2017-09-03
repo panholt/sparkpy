@@ -105,3 +105,4 @@ ENV/
 
 # Sublime Text
 *.sublime-workspace
+*.sublime-project
