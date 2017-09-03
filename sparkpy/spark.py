@@ -1,3 +1,30 @@
+'''
+sparkpy Module
+~~~~~~~~~~~~~~
+sparkpy is a library written in Python3 for Cisco Spark that uses native
+python methods to interact with the Cisco Spark API in a pythonic way.
+
+Usage example:
+    >>> from sparkpy import Spark
+    >>> spark = Spark()  # Use the SPARK_TOKEN environment varible
+    >>> # Alternatively spark = Spark('MY TOKEN')
+    >>> for room in spark.rooms:
+        ... print(f'{room.title}')
+    >>> room = spark.create_room('Sample Room')
+    >>> room.add_member('panholt@gmail.com')
+    >>> # Rename the room title
+    >>> room.title = 'A different title'
+    >>> # Delete the room
+    >>> room.delete()
+
+There are many more features added please consult the documentation at
+{documentation placeholder}
+
+:copyright: (c) 2017 by Paul Anholt
+:license: MIT, see LICENSE for more details.
+'''
+
+
 from os import environ
 from .utils import is_api_id
 from .session import SparkSession
@@ -10,6 +37,17 @@ from .models.container import SparkContainer
 
 
 class Spark(object):
+    '''
+    A :class:`Spark <Spark>` object.
+    Used as the main interaction between the sparkpy module and Cisco Spark API
+
+    :param token: (optional) The bearer token for the Cisco Spark API
+                  If this paramater is not provided then the token is
+                  taken from the `SPARK_TOKEN` environment variable
+    Usage:
+      >>> from sparkpy import Spark
+      >>> spark = Spark()
+    '''
 
     def __init__(self, token=None):
         self._id = None
@@ -26,28 +64,34 @@ class Spark(object):
 
     @property
     def id(self):
-        '''Returns the `personId` property of the bearer_token's owner
-           :type: string '''
+        '''
+        Returns the `personId` property of the bearer_token's owner
+
+        :type: string
+        '''
         if self._id is None:
             self._fetch_self()
         return self._id
 
     @property
     def session(self):
-        '''  session handler'''
+        '''
+        A :class:`SparkSession <SparkSession>` object.
+        A subclassed requests session, bound to a single :class:`Spark <Spark>`
+        instance so `429` Responses are handled properly
+        '''
         return self._session
 
     @property
     def me(self):
-        ''' `SparkPerson` of owner
-        '''
+        ''' :class:`SparkPerson <SparkPerson>` of the token's owner '''
         return self._me
 
     @property
     def is_bot(self):
         '''
-            Returns `True` if bearer_token's owner is a bot
-            type: bool
+        Returns `True` if bearer_token's owner is a bot
+        type: bool
         '''
         if self._is_bot is None:
             self._fetch_self()
@@ -55,17 +99,46 @@ class Spark(object):
 
     @property
     def rooms(self):
+        '''
+        A :class:`SparkContainer <SparkContainer>` object.
+        Returns a generator like object yielding :class:`Sparkroom <Sparkroom>`
+        objects.
+        Also provides dict style lookups using a `roomId`, list style indexing,
+        and slicing.
+        '''
         return SparkContainer(SparkRoom, parent=self)
 
     @property
     def teams(self):
+        '''
+        A :class:`SparkContainer <SparkContainer>` object.
+        Returns a generator like object yielding :class:`SparkTeam <SparkTeam>`
+        objects.
+        Also provides dict style lookups using a `teamId`, list style indexing,
+        and slicing.
+        '''
         return SparkContainer(SparkTeam, parent=self)
 
     @property
     def webhooks(self):
+        '''
+        A :class:`SparkContainer <SparkContainer>` object.
+        Returns a generator like object yielding
+        :class:`SparkWebhook <SparkWebhook>` objects.
+        Also provides dict style lookups using a `roomId`, list style indexing,
+        and slicing.
+        '''
         return SparkContainer(SparkWebhook, parent=self)
 
     def search_people(self, query, org_id=None, max_=None):
+        '''
+        Query the Cisco Spark API for people.
+
+        :param query: The query string, may be a Cisco Spark API id,
+                      an email address, or a list of Cisco Spark API id's
+        :param org_id: (optional) A Cisco Spark Organization id
+        :param max_: (optional) `int` limit the results to `max` numbers
+        '''
         params = {}
         if is_api_id(query, 'people'):
             params.update({'id'})
@@ -82,6 +155,12 @@ class Spark(object):
         return SparkContainer(SparkPerson, parent=self, params=params)
 
     def _fetch_self(self):
+        '''
+        Internal method used to get the details of the token owner, and
+        validate the bearer token
+
+        :raises: `Exception`
+        '''
         resp = self.session.get('https://api.ciscospark.com/v1/people/me')
         if resp.status_code == 200:
             try:
@@ -98,12 +177,16 @@ class Spark(object):
             raise Exception(f'Invalid status code {r.status_code}: {r.text}')
 
     def create_room(self, title, team_id=None):
-        '''Create a Cisco Spark room
+        '''
+        Create a Cisco Spark room
 
                 :param title: Room title
                 :type title: str
+                :param team_id: A Cisco Spark Team API id if room is to be a
+                                subroom of a :class:`SparkTeam <SparkTeam>`
+                :type team_id: str
 
-                :return: SparkTeam
+                :return: :class:`SparkRoom <SparkRoom>`
         '''
 
         data = {'title': title}
@@ -116,13 +199,17 @@ class Spark(object):
         return SparkRoom(parent=self, **room)
 
     def create_one_on_one_room(self, person, message):
-        '''Create or send a message to a 1:1 room
+        '''
+        Create or send a message to a 1:1 room
 
-                :param person: Either a personId, email address, or API id
-                :type person: str
+        :param person: Either a personId, email address,
+                       or Cisco Spark person API id
+        :type person: str
+        :param message: The markdown formatted message to send
+        :type person: str
 
-                :return: SparkRoom
-            '''
+        :return: :class:`SparkRoom <SparkRoom>`
+        '''
 
         isinstance(message, str) and len(message) > 0
         if isinstance(person, SparkPerson) or is_api_id(person):
@@ -224,7 +311,7 @@ class Spark(object):
                                 or 'person_email' are provided
 
             .. note:: This method must be called with exactly one of
-                      'room_id', 'person_id', 'person_email'
+                      `room_id`, `person_id`, or `person_email`
         '''
 
         base_data = {}

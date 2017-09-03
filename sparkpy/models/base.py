@@ -1,5 +1,10 @@
-import logging
+'''
+sparkpy.models.base
+~~~~~~~~~~~~~~
+Abstract Base Class for all sparkpy models
+'''
 
+import logging
 from abc import ABC, abstractproperty, abstractmethod
 from ..session import SparkSession
 from ..models.time import SparkTime
@@ -9,16 +14,22 @@ log = logging.getLogger('sparkpy.base')
 
 
 class SparkBase(ABC, object):
+    '''
+    Abstract Base Class for all sparkpy models. Contains class and instance
+    attributes
+    '''
 
     @abstractproperty
     def API_BASE(self):
-        ''' Returns the base URL for the resource
+        '''
+        Class attribute which returns the base URL for the resource
         '''
 
     @abstractproperty
     def PROPERTIES(self):
-        ''' Return a dict of SparkProperties
-            representing the properties of parent class
+        '''
+        Class attribute which returns a dictionary of the API properties of
+        the resouce
         '''
         pass
 
@@ -53,6 +64,10 @@ class SparkBase(ABC, object):
 
     @property
     def loaded(self):
+        '''
+        Returns `True` if the attributes have been loaded
+        from the Cisco Spark API
+        '''
         return self._loaded
 
     @loaded.setter
@@ -62,6 +77,10 @@ class SparkBase(ABC, object):
 
     @property
     def loaded_at(self):
+        '''
+        Returns `True` if the attributes have been loaded
+        from the Cisco Spark API
+        '''
         return self._loaded_at
 
     @loaded_at.setter

@@ -11,6 +11,12 @@ The module holds models of the spark objects
 .. automodule:: sparkpy.models.base
     :members:
 
+SparkBase
+-----------------------
+.. automodule:: sparkpy.models.base
+    :members:
+    :show-inheritance:
+
 SparkRoom
 -----------------------
 .. automodule:: sparkpy.models.room

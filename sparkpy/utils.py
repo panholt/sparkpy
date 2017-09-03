@@ -1,7 +1,16 @@
+'''
+sparkpy.utils
+~~~~~~~~~~~~~~
+Utility functions that are used internally by sparkpy
+'''
+
 import base64
 from urllib.parse import urlparse
 from uuid import UUID, uuid4
 
+
+# Shortcuts to translate between internal API paths
+# and the external url paths
 url2api = {'messages': 'MESSAGE',
            'rooms': 'ROOM',
            'people': 'PEOPLE',
@@ -24,15 +33,16 @@ api2url = {'MESSAGE': 'messages',
            'LICENSE': 'licenses',
            'ROLE': 'roles'}
 
-magic_number = 'Y2lzY29zcGFyazovL'  # Magic number: b64.encode('ciscospark://')
+# Magic number: b64.encode('ciscospark://')
+magic_number = 'Y2lzY29zcGFyazovL'
 
 
 def add_padding(_id):
-    # Avoid padding errors from base64
-        padding = len(_id) % 4
-        if padding:
-            _id += '=' * (4 - padding)
-        return _id
+    ''' Properly pad base64 strings from Cisco Spark API '''
+    padding = len(_id) % 4
+    if padding:
+        _id += '=' * (4 - padding)
+    return _id
 
 
 # -------------! uuid helpers
