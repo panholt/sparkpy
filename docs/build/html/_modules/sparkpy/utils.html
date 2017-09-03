@@ -1,0 +1,231 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>sparkpy.utils &#8212; sparkpy 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for sparkpy.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="k">import</span> <span class="n">urlparse</span>
+<span class="kn">from</span> <span class="nn">uuid</span> <span class="k">import</span> <span class="n">UUID</span><span class="p">,</span> <span class="n">uuid4</span>
+
+<span class="n">url2api</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;messages&#39;</span><span class="p">:</span> <span class="s1">&#39;MESSAGE&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;rooms&#39;</span><span class="p">:</span> <span class="s1">&#39;ROOM&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;people&#39;</span><span class="p">:</span> <span class="s1">&#39;PEOPLE&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;memberships&#39;</span><span class="p">:</span> <span class="s1">&#39;MEMBERSHIP&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;teams&#39;</span><span class="p">:</span> <span class="s1">&#39;TEAM&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;team/memberships&#39;</span><span class="p">:</span> <span class="s1">&#39;TEAM_MEMBERSHIP&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;webhook&#39;</span><span class="p">:</span> <span class="s1">&#39;WEBHOOK&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;organizations&#39;</span><span class="p">:</span> <span class="s1">&#39;ORGANIZATION&#39;</span><span class="p">,</span>  <span class="c1"># Unsure about these</span>
+           <span class="s1">&#39;licenses&#39;</span><span class="p">:</span> <span class="s1">&#39;LICENSE&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;roles&#39;</span><span class="p">:</span> <span class="s1">&#39;ROLE&#39;</span><span class="p">}</span>
+
+<span class="n">api2url</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;MESSAGE&#39;</span><span class="p">:</span> <span class="s1">&#39;messages&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;ROOM&#39;</span><span class="p">:</span> <span class="s1">&#39;rooms&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;PEOPLE&#39;</span><span class="p">:</span> <span class="s1">&#39;people&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;MEMBERSHIP&#39;</span><span class="p">:</span> <span class="s1">&#39;memberships&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;TEAM&#39;</span><span class="p">:</span> <span class="s1">&#39;teams&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;TEAM_MEMBERSHIP&#39;</span><span class="p">:</span> <span class="s1">&#39;team/memberships&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;WEBHOOK&#39;</span><span class="p">:</span> <span class="s1">&#39;webhook&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;ORGANIZATION&#39;</span><span class="p">:</span> <span class="s1">&#39;organizations&#39;</span><span class="p">,</span>  <span class="c1"># Unsure about these</span>
+           <span class="s1">&#39;LICENSE&#39;</span><span class="p">:</span> <span class="s1">&#39;licenses&#39;</span><span class="p">,</span>
+           <span class="s1">&#39;ROLE&#39;</span><span class="p">:</span> <span class="s1">&#39;roles&#39;</span><span class="p">}</span>
+
+<span class="n">magic_number</span> <span class="o">=</span> <span class="s1">&#39;Y2lzY29zcGFyazovL&#39;</span>  <span class="c1"># Magic number: b64.encode(&#39;ciscospark://&#39;)</span>
+
+
+<div class="viewcode-block" id="add_padding"><a class="viewcode-back" href="../../sparkpy.html#sparkpy.utils.add_padding">[docs]</a><span class="k">def</span> <span class="nf">add_padding</span><span class="p">(</span><span class="n">_id</span><span class="p">):</span>
+    <span class="c1"># Avoid padding errors from base64</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_id</span><span class="p">)</span> <span class="o">%</span> <span class="mi">4</span>
+        <span class="k">if</span> <span class="n">padding</span><span class="p">:</span>
+            <span class="n">_id</span> <span class="o">+=</span> <span class="s1">&#39;=&#39;</span> <span class="o">*</span> <span class="p">(</span><span class="mi">4</span> <span class="o">-</span> <span class="n">padding</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_id</span></div>
+
+
+<span class="c1"># -------------! uuid helpers</span>
+<div class="viewcode-block" id="is_uuid"><a class="viewcode-back" href="../../sparkpy.html#sparkpy.utils.is_uuid">[docs]</a><span class="k">def</span> <span class="nf">is_uuid</span><span class="p">(</span><span class="n">_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Take a string, return True if its a valid uuid 4&#39;&#39;&#39;</span>
+    <span class="c1"># Handle consumer org</span>
+    <span class="k">if</span> <span class="n">_id</span> <span class="o">==</span> <span class="s1">&#39;consumer&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Handle memberships</span>
+        <span class="k">if</span> <span class="s1">&#39;:&#39;</span> <span class="ow">in</span> <span class="n">_id</span><span class="p">:</span>
+            <span class="n">_id</span><span class="p">,</span> <span class="n">parent</span> <span class="o">=</span> <span class="n">_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+            <span class="n">UUID</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">UUID</span><span class="p">(</span><span class="n">_id</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="decode_api_id"><a class="viewcode-back" href="../../sparkpy.html#sparkpy.utils.decode_api_id">[docs]</a><span class="k">def</span> <span class="nf">decode_api_id</span><span class="p">(</span><span class="n">_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Takes a Cisco Spark API ID and returns a dictonary of the components</span>
+<span class="sd">        :raises: `ValueError`</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="n">_id</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">magic_number</span><span class="p">):</span>
+        <span class="n">__id</span> <span class="o">=</span> <span class="n">_id</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">add_padding</span><span class="p">(</span><span class="n">_id</span><span class="p">)))</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+        <span class="n">uuid</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;uuid&#39;</span><span class="p">:</span> <span class="n">uuid</span><span class="p">,</span>
+                <span class="s1">&#39;path&#39;</span><span class="p">:</span> <span class="n">api2url</span><span class="p">[</span><span class="n">path</span><span class="p">],</span>
+                <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">__id</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid API ID&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="is_api_id"><a class="viewcode-back" href="../../sparkpy.html#sparkpy.utils.is_api_id">[docs]</a><span class="k">def</span> <span class="nf">is_api_id</span><span class="p">(</span><span class="n">_id</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Returns `True` if provided with a valid Cisco Spark API ID</span>
+<span class="sd">        An optional `path` may be specified to validate the object</span>
+<span class="sd">        is of the correct type</span>
+
+<span class="sd">        :raises: `ValueError`</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">decode_api_id</span><span class="p">(</span><span class="n">_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">path</span> <span class="ow">and</span> <span class="n">path</span> <span class="o">!=</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;path&#39;</span><span class="p">]:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="api_id_to_uuid"><a class="viewcode-back" href="../../sparkpy.html#sparkpy.utils.api_id_to_uuid">[docs]</a><span class="k">def</span> <span class="nf">api_id_to_uuid</span><span class="p">(</span><span class="n">_id</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Takes Cisco Spark API ID and returns the uuid for the object&#39;&#39;&#39;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_id</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">_id</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">magic_number</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid Cisco Spark API id provided&#39;</span><span class="p">)</span>
+
+    <span class="n">url</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">add_padding</span><span class="p">(</span><span class="n">_id</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">url</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="uuid_to_api_id"><a class="viewcode-back" href="../../sparkpy.html#sparkpy.utils.uuid_to_api_id">[docs]</a><span class="k">def</span> <span class="nf">uuid_to_api_id</span><span class="p">(</span><span class="n">_id</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39; Takes a path (ie: messages) and a uuid</span>
+<span class="sd">        to generate a Cisco Spark API ID &#39;&#39;&#39;</span>
+
+    <span class="c1"># memberships are actually two uuids {resource}:{id}</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="s1">&#39;MEMBERSHIP&#39;</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s1">&#39;:&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_id</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{path}</span><span class="s1"> requires two uuids seperated by a colon&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">parent</span><span class="p">,</span> <span class="n">_id</span> <span class="o">=</span> <span class="n">_id</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_uuid</span><span class="p">(</span><span class="n">parent</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid UUID for parent Team/Room&#39;</span><span class="p">)</span>
+    <span class="c1"># &#39;consumer&#39; is the only (known) non uuid values</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_uuid</span><span class="p">(</span><span class="n">_id</span><span class="p">)</span> <span class="ow">and</span> <span class="n">_id</span> <span class="o">!=</span> <span class="s1">&#39;consumer&#39;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid UUID provided&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">url2api</span><span class="p">:</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">url2api</span><span class="p">[</span><span class="n">path</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">path</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">api2url</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid Path specified&#39;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">parent</span><span class="p">:</span>
+        <span class="n">_id</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;</span><span class="si">{parent}</span><span class="s1">:</span><span class="si">{_id}</span><span class="s1">&#39;</span>
+    <span class="n">region</span> <span class="o">=</span> <span class="s1">&#39;us&#39;</span>  <span class="c1"># Are there others??</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">f</span><span class="s1">&#39;ciscospark://</span><span class="si">{region}</span><span class="s1">/</span><span class="si">{path}</span><span class="s1">/</span><span class="si">{_id}</span><span class="s1">&#39;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">url</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">url</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;=&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="uuid_v4_str"><a class="viewcode-back" href="../../sparkpy.html#sparkpy.utils.uuid_v4_str">[docs]</a><span class="k">def</span> <span class="nf">uuid_v4_str</span><span class="p">():</span>
+    <span class="sd">&#39;&#39;&#39; Returns a valid uuidv4 string&#39;&#39;&#39;</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid4</span><span class="p">())</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">sparkpy</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Intro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spark.html">Spark</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../container.html">SparkContainer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Paul Anholt.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

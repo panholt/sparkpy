@@ -1,0 +1,283 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Spark &#8212; sparkpy 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="SparkContainer" href="container.html" />
+    <link rel="prev" title="Intro" href="intro.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="spark">
+<h1>Spark<a class="headerlink" href="#spark" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="module-sparkpy.spark">
+<span id="sparkpy-spark-module"></span><h2>sparkpy.spark module<a class="headerlink" href="#module-sparkpy.spark" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sparkpy.spark.Spark">
+<em class="property">class </em><code class="descclassname">sparkpy.spark.</code><code class="descname">Spark</code><span class="sig-paren">(</span><em>token=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/spark.html#Spark"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.spark.Spark" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="sparkpy.spark.Spark.create_one_on_one_room">
+<code class="descname">create_one_on_one_room</code><span class="sig-paren">(</span><em>person</em>, <em>message</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/spark.html#Spark.create_one_on_one_room"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.spark.Spark.create_one_on_one_room" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create or send a message to a 1:1 room</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>person</strong> (<em>str</em>) – Either a personId, email address, or API id</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">SparkRoom</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkpy.spark.Spark.create_room">
+<code class="descname">create_room</code><span class="sig-paren">(</span><em>title</em>, <em>team_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/spark.html#Spark.create_room"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.spark.Spark.create_room" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Cisco Spark room</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>title</strong> (<em>str</em>) – Room title</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">SparkTeam</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkpy.spark.Spark.create_team">
+<code class="descname">create_team</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/spark.html#Spark.create_team"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.spark.Spark.create_team" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Cisco Spark webhook</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>name</strong> (<em>str</em>) – Team name</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">SparkTeam</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkpy.spark.Spark.create_webhook">
+<code class="descname">create_webhook</code><span class="sig-paren">(</span><em>name</em>, <em>target_url</em>, <em>resource</em>, <em>event</em>, <em>filter=None</em>, <em>secret=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/spark.html#Spark.create_webhook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.spark.Spark.create_webhook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a Cisco Spark webhook</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>name</strong> (<em>str</em>) – Webhook name</li>
+<li><strong>target_url</strong> (<em>str</em>) – Sets the <cite>targetUrl</cite> property</li>
+<li><strong>resource</strong> (<em>str</em>) – Sets the <cite>resource</cite> property</li>
+<li><strong>event</strong> (<em>str</em>) – Sets the <cite>event</cite> property</li>
+<li><strong>person_id</strong> (<em>str</em>) – Sets the <cite>toPersonId</cite> property</li>
+<li><strong>filter</strong> (<em>str</em>) – Sets the <cite>filter</cite> property</li>
+<li><strong>secret</strong> (<em>str</em>) – Sets the <cite>secret</cite> property</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">SparkWebhook</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">AssertionError</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sparkpy.spark.Spark.id">
+<code class="descname">id</code><a class="headerlink" href="#sparkpy.spark.Spark.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the <cite>personId</cite> property of the bearer_token’s owner
+:type: string</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sparkpy.spark.Spark.is_bot">
+<code class="descname">is_bot</code><a class="headerlink" href="#sparkpy.spark.Spark.is_bot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns <cite>True</cite> if bearer_token’s owner is a bot
+type: bool</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sparkpy.spark.Spark.me">
+<code class="descname">me</code><a class="headerlink" href="#sparkpy.spark.Spark.me" title="Permalink to this definition">¶</a></dt>
+<dd><p><cite>SparkPerson</cite> of owner</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sparkpy.spark.Spark.rooms">
+<code class="descname">rooms</code><a class="headerlink" href="#sparkpy.spark.Spark.rooms" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sparkpy.spark.Spark.search_people">
+<code class="descname">search_people</code><span class="sig-paren">(</span><em>query</em>, <em>org_id=None</em>, <em>max_=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/spark.html#Spark.search_people"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.spark.Spark.search_people" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="sparkpy.spark.Spark.send_message">
+<code class="descname">send_message</code><span class="sig-paren">(</span><em>text</em>, <em>room_id=None</em>, <em>person_id=None</em>, <em>person_email=None</em>, <em>file=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/spark.html#Spark.send_message"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.spark.Spark.send_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Send a Cisco Spark message</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>text</strong> (<em>str</em>) – Markdown formatted message body
+If message is longer than 7,000 characters
+it is split at linebreak boundries
+and sent as seperate messages</li>
+<li><strong>room_id</strong> (<em>str</em>) – Sets the <cite>roomId</cite> property</li>
+<li><strong>person_id</strong> (<em>str</em>) – Sets the <cite>toPersonId</cite> property</li>
+<li><strong>person_email</strong> – Sets the <cite>toPersonEmailAddress</cite> property</li>
+<li><strong>file</strong> (<em>str</em>) – Path to file to upload</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">None</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><strong>ValueError</strong> – when none of ‘room_id’, ‘person_id’,
+or ‘person_email’ are provided</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This method must be called with exactly one of
+‘room_id’, ‘person_id’, ‘person_email’</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sparkpy.spark.Spark.session">
+<code class="descname">session</code><a class="headerlink" href="#sparkpy.spark.Spark.session" title="Permalink to this definition">¶</a></dt>
+<dd><p>session handler</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sparkpy.spark.Spark.teams">
+<code class="descname">teams</code><a class="headerlink" href="#sparkpy.spark.Spark.teams" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="sparkpy.spark.Spark.webhooks">
+<code class="descname">webhooks</code><a class="headerlink" href="#sparkpy.spark.Spark.webhooks" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">sparkpy</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Intro</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Spark</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-sparkpy.spark">sparkpy.spark module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="container.html">SparkContainer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="models.html">Models</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="intro.html" title="previous chapter">Intro</a></li>
+      <li>Next: <a href="container.html" title="next chapter">SparkContainer</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Paul Anholt.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/spark.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

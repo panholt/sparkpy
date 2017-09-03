@@ -1,0 +1,12 @@
+SparkSession
+============
+
+.. toctree::
+   :maxdepth: 4
+
+sparkpy\.session module
+-----------------------
+.. automodule:: sparkpy.session
+    :show-inheritance:
+    :members:
+    :undoc-members:

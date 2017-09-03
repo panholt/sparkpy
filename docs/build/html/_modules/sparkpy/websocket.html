@@ -1,0 +1,274 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>sparkpy.websocket &#8212; sparkpy 0.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for sparkpy.websocket</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">websocket</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">.utils.uuid</span> <span class="k">import</span> <span class="n">uuid_v4_str</span><span class="p">,</span> <span class="n">uuid_to_api_id</span>
+
+<span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;pyspark.websocket&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SparkWebsocket"><a class="viewcode-back" href="../../sparkpy.html#sparkpy.websocket.SparkWebsocket">[docs]</a><span class="k">class</span> <span class="nc">SparkWebsocket</span><span class="p">(</span><span class="n">websocket</span><span class="o">.</span><span class="n">WebSocketApp</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spark</span><span class="p">,</span> <span class="n">message_callback</span><span class="p">,</span> <span class="n">rooms_callback</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spark</span> <span class="o">=</span> <span class="n">spark</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_device</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_device</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_wss_url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="p">[</span><span class="s1">&#39;webSocketUrl&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_ping_id</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rooms_callback</span> <span class="o">=</span> <span class="n">rooms_callback</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_message_callback</span> <span class="o">=</span> <span class="n">message_callback</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wss_url</span><span class="p">,</span>
+                         <span class="n">on_open</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_open_cb</span><span class="p">,</span>
+                         <span class="n">on_message</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_message_cb</span><span class="p">,</span>
+                         <span class="n">on_close</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_close_cb</span><span class="p">,</span>
+                         <span class="n">on_ping</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_ping_cb</span><span class="p">,</span>
+                         <span class="n">on_error</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_error_cb</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">wss_url</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wss_url</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">last_ping_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_ping_id</span>
+
+    <span class="nd">@last_ping_id</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">last_ping_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_ping_id</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">return</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">rooms_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rooms_callback</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">message_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_message_callback</span>
+
+    <span class="k">def</span> <span class="nf">_open_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws</span><span class="p">):</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Websocket connected&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">uuid_v4_str</span><span class="p">(),</span>
+                <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;authorization&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;token&#39;</span><span class="p">:</span> <span class="s1">&#39;Bearer &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">spark</span><span class="o">.</span><span class="n">bearer_token</span><span class="p">}}</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Sending: </span><span class="si">{data}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_spark_ping</span><span class="p">()</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_open_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws</span><span class="p">):</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Websocket connected&#39;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="n">uuid_v4_str</span><span class="p">(),</span>
+                <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;authorization&#39;</span><span class="p">,</span>
+                <span class="s1">&#39;data&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;token&#39;</span><span class="p">:</span> <span class="s1">&#39;Bearer &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">spark</span><span class="o">.</span><span class="n">bearer_token</span><span class="p">}}</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Sending: </span><span class="si">{data}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_spark_ping</span><span class="p">()</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_message_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws</span><span class="p">,</span> <span class="n">message</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">event</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Received event on websocket: </span><span class="si">{event}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="c1"># Handle pings</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;type&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;pong&#39;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_ping_id</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Ping ID does not match&#39;</span><span class="p">)</span>
+                <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">event_type</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;eventType&#39;</span><span class="p">)</span>
+
+            <span class="c1"># Typing indicators</span>
+            <span class="k">if</span> <span class="s1">&#39;typing&#39;</span> <span class="ow">in</span> <span class="n">event_type</span><span class="p">:</span>
+                <span class="c1"># We have no use for these so ignore them.</span>
+                <span class="k">return</span>
+
+            <span class="c1"># Conversation Service</span>
+            <span class="k">elif</span> <span class="n">event_type</span> <span class="o">==</span> <span class="s1">&#39;conversation.activity&#39;</span><span class="p">:</span>
+                <span class="n">verb</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;activity&#39;</span><span class="p">][</span><span class="s1">&#39;verb&#39;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">verb</span> <span class="o">==</span> <span class="s1">&#39;post&#39;</span><span class="p">:</span>
+                    <span class="n">_id</span> <span class="o">=</span> <span class="n">uuid_to_api_id</span><span class="p">(</span><span class="s1">&#39;messages&#39;</span><span class="p">,</span>
+                                         <span class="n">event</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;activity&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_message_callback</span><span class="p">(</span><span class="n">_id</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">verb</span> <span class="o">==</span> <span class="s1">&#39;acknowledge&#39;</span><span class="p">:</span>
+                    <span class="c1"># read receipt, ignore</span>
+                    <span class="k">return</span>
+                <span class="k">elif</span> <span class="n">verb</span> <span class="o">==</span> <span class="s1">&#39;create&#39;</span><span class="p">:</span>
+                    <span class="n">_id</span> <span class="o">=</span> <span class="n">uuid_to_api_id</span><span class="p">(</span><span class="s1">&#39;rooms&#39;</span><span class="p">,</span>
+                                         <span class="n">event</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;activity&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_rooms_callback</span><span class="p">(</span><span class="n">_id</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">verb</span> <span class="o">==</span> <span class="s1">&#39;leave&#39;</span><span class="p">:</span>
+                    <span class="n">_id</span> <span class="o">=</span> <span class="n">uuid_to_api_id</span><span class="p">(</span><span class="s1">&#39;rooms&#39;</span><span class="p">,</span>
+                                         <span class="n">event</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;activity&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_rooms_callback</span><span class="p">(</span><span class="n">_id</span><span class="p">,</span> <span class="n">leave</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">verb</span> <span class="o">==</span> <span class="s1">&#39;add&#39;</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="s1">&#39;TEAM&#39;</span> <span class="ow">in</span> <span class="n">event</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;activity&#39;</span><span class="p">][</span><span class="s1">&#39;target&#39;</span><span class="p">][</span><span class="s1">&#39;tags&#39;</span><span class="p">]:</span>
+                        <span class="c1"># Team subroom create.</span>
+                        <span class="k">return</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="c1"># Added to room</span>
+                        <span class="n">_id</span> <span class="o">=</span> <span class="n">uuid_to_api_id</span><span class="p">(</span><span class="s1">&#39;rooms&#39;</span><span class="p">,</span>
+                                             <span class="n">event</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;activity&#39;</span><span class="p">][</span><span class="s1">&#39;target&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_rooms_callback</span><span class="p">(</span><span class="n">_id</span><span class="p">)</span>
+
+                <span class="k">elif</span> <span class="n">verb</span> <span class="o">==</span> <span class="s1">&#39;update&#39;</span><span class="p">:</span>
+                    <span class="n">_id</span> <span class="o">=</span> <span class="n">uuid_to_api_id</span><span class="p">(</span><span class="s1">&#39;rooms&#39;</span><span class="p">,</span>
+                                         <span class="n">event</span><span class="p">[</span><span class="s1">&#39;data&#39;</span><span class="p">][</span><span class="s1">&#39;activity&#39;</span><span class="p">][</span><span class="s1">&#39;target&#39;</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_rooms_callback</span><span class="p">(</span><span class="n">_id</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">log</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Unknown verb: </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">verb</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Unknown event type: </span><span class="si">{event_type}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_error_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">error</span>
+
+    <span class="k">def</span> <span class="nf">_close_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Websocket connection closed&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_ping_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ws</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;_ping_cb hit, sending ping&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_spark_ping</span><span class="p">()</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_spark_ping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_ping_id</span> <span class="o">=</span> <span class="n">uuid_v4_str</span><span class="p">()</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;ping&#39;</span><span class="p">,</span> <span class="s1">&#39;id&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_ping_id</span><span class="p">})</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;PING! Sending: </span><span class="si">{data}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_get_devices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spark</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;https://wdm-a.wbx2.com/wdm/api/v1/devices&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;devices&#39;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">r</span><span class="p">[</span><span class="s1">&#39;devices&#39;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># TODO Exceptions</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">_create_device</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">device</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_devices</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">device</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;python-spark-websocket&#39;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">device</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">spark</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s1">&#39;https://wdm-a.wbx2.com/wdm/api/v1/devices&#39;</span><span class="p">,</span>
+                                    <span class="c1"># https://github.com/ciscospark/spark-js-sdk/tree/master/src/defaults.js#L64</span>
+                                    <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;deviceName&#39;</span><span class="p">:</span> <span class="s1">&#39;python-spark-websocket&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;deviceType&#39;</span><span class="p">:</span> <span class="s1">&#39;DESKTOP&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;localizedModel&#39;</span><span class="p">:</span> <span class="s1">&#39;DESKTOP&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;model&#39;</span><span class="p">:</span> <span class="s1">&#39;DESKTOP&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;python-spark-websocket&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;systemName&#39;</span><span class="p">:</span> <span class="s1">&#39;DESKTOP&#39;</span><span class="p">,</span>
+                                           <span class="s1">&#39;systemVersion&#39;</span><span class="p">:</span> <span class="mi">42</span><span class="p">})</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;SparkWebsocket(</span><span class="si">{}</span><span class="s1">)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wss_url</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">sparkpy</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../intro.html">Intro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spark.html">Spark</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../container.html">SparkContainer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../models.html">Models</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Paul Anholt.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

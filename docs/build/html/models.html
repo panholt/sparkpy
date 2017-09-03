@@ -1,0 +1,347 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Models &#8212; sparkpy 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="SparkContainer" href="container.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="models">
+<h1>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="sparkpy-models-module">
+<h2>sparkpy.models module<a class="headerlink" href="#sparkpy-models-module" title="Permalink to this headline">¶</a></h2>
+<p>The module holds models of the spark objects</p>
+<span class="target" id="module-sparkpy.models.base"></span></div>
+<div class="section" id="module-sparkpy.models.room">
+<span id="sparkroom"></span><h2>SparkRoom<a class="headerlink" href="#module-sparkpy.models.room" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-sparkpy.models.message">
+<span id="sparkmessage"></span><h2>SparkMessage<a class="headerlink" href="#module-sparkpy.models.message" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sparkpy.models.message.SparkMessage">
+<em class="property">class </em><code class="descclassname">sparkpy.models.message.</code><code class="descname">SparkMessage</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/models/message.html#SparkMessage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.models.message.SparkMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sparkpy.models.base.SparkBase</span></code></p>
+<p>Cisco Spark Message Model</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> – All standard Spark API properties for a Message</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sparkpy.models.people">
+<span id="sparkpeople"></span><h2>SparkPeople<a class="headerlink" href="#module-sparkpy.models.people" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-sparkpy.models.team">
+<span id="sparkteam"></span><h2>SparkTeam<a class="headerlink" href="#module-sparkpy.models.team" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sparkpy.models.team.SparkTeam">
+<em class="property">class </em><code class="descclassname">sparkpy.models.team.</code><code class="descname">SparkTeam</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/models/team.html#SparkTeam"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.models.team.SparkTeam" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sparkpy.models.base.SparkBase</span></code></p>
+<p>Cisco Spark Message Model</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> – All standard Spark API properties for a Message</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="sparkpy.models.team.SparkTeam.add_member">
+<code class="descname">add_member</code><span class="sig-paren">(</span><em>_id</em>, <em>email=''</em>, <em>moderator=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/models/team.html#SparkTeam.add_member"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.models.team.SparkTeam.add_member" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a person to the team</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>email</strong> (<em>str</em>) – email address of person to add</li>
+<li><strong>moderator</strong> (<em>bool</em>) – Default: False, Make person a moderator of room</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sparkpy.models.team.SparkTeam.members">
+<code class="descname">members</code><a class="headerlink" href="#sparkpy.models.team.SparkTeam.members" title="Permalink to this definition">¶</a></dt>
+<dd><p>SparkContainer:<cite>SparkTeamMembership</cite>
+Generator of members of the team.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkpy.models.team.SparkTeam.remove_all_members">
+<code class="descname">remove_all_members</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/models/team.html#SparkTeam.remove_all_members"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.models.team.SparkTeam.remove_all_members" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all people from the room leaving this account</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="sparkpy.models.team.SparkTeam.remove_member">
+<code class="descname">remove_member</code><span class="sig-paren">(</span><em>_id</em>, <em>email=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/models/team.html#SparkTeam.remove_member"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.models.team.SparkTeam.remove_member" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a person to the team</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>email</strong> (<em>str</em>) – email address of person to add</li>
+<li><strong>moderator</strong> (<em>bool</em>) – Default: False, Make person a moderator of room</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">None</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="sparkpy.models.team.SparkTeam.subrooms">
+<code class="descname">subrooms</code><a class="headerlink" href="#sparkpy.models.team.SparkTeam.subrooms" title="Permalink to this definition">¶</a></dt>
+<dd><p>SparkContainer:<cite>SparkRoom</cite>
+Generator of members of the team.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-sparkpy.models.membership">
+<span id="sparkmembership"></span><h2>SparkMembership<a class="headerlink" href="#module-sparkpy.models.membership" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sparkpy.models.membership.SparkMembership">
+<em class="property">class </em><code class="descclassname">sparkpy.models.membership.</code><code class="descname">SparkMembership</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/models/membership.html#SparkMembership"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.models.membership.SparkMembership" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sparkpy.models.base.SparkBase</span></code></p>
+<p>Cisco Spark Message Model</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> – All standard Spark API properties for a Message</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="sparkpy.models.membership.SparkTeamMembership">
+<em class="property">class </em><code class="descclassname">sparkpy.models.membership.</code><code class="descname">SparkTeamMembership</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/models/membership.html#SparkTeamMembership"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.models.membership.SparkTeamMembership" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sparkpy.models.base.SparkBase</span></code></p>
+<p>Cisco Spark Message Model</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> – All standard Spark API properties for a Message</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sparkpy.models.webhook">
+<span id="sparkwebhook"></span><h2>SparkWebhook<a class="headerlink" href="#module-sparkpy.models.webhook" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sparkpy.models.webhook.SparkWebhook">
+<em class="property">class </em><code class="descclassname">sparkpy.models.webhook.</code><code class="descname">SparkWebhook</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/models/webhook.html#SparkWebhook"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.models.webhook.SparkWebhook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sparkpy.models.base.SparkBase</span></code></p>
+<p>Cisco Spark Webhook Model</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>session</strong> (<cite>SparkSession</cite>) – SparkSession object</li>
+<li><strong>**kwargs</strong> – All standard Spark API properties for a Webhook</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sparkpy.models.role">
+<span id="sparkrole"></span><h2>SparkRole<a class="headerlink" href="#module-sparkpy.models.role" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sparkpy.models.role.SparkRole">
+<em class="property">class </em><code class="descclassname">sparkpy.models.role.</code><code class="descname">SparkRole</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/models/role.html#SparkRole"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.models.role.SparkRole" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sparkpy.models.base.SparkBase</span></code></p>
+<p>Cisco Spark Role Model</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> – All standard Spark API properties for a Message</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sparkpy.models.license">
+<span id="sparklicense"></span><h2>SparkLicense<a class="headerlink" href="#module-sparkpy.models.license" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sparkpy.models.license.SparkLicense">
+<em class="property">class </em><code class="descclassname">sparkpy.models.license.</code><code class="descname">SparkLicense</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/models/license.html#SparkLicense"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.models.license.SparkLicense" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sparkpy.models.base.SparkBase</span></code></p>
+<p>Cisco Spark License Model</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> – All standard Spark API properties for a License</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-sparkpy.models.organization">
+<span id="sparkorganization"></span><h2>SparkOrganization<a class="headerlink" href="#module-sparkpy.models.organization" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="sparkpy.models.organization.SparkOrganization">
+<em class="property">class </em><code class="descclassname">sparkpy.models.organization.</code><code class="descname">SparkOrganization</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sparkpy/models/organization.html#SparkOrganization"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparkpy.models.organization.SparkOrganization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">sparkpy.models.base.SparkBase</span></code></p>
+<p>Cisco Spark Organization Model</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>**kwargs</strong> – All standard Spark API properties for a Organization</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">sparkpy</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="intro.html">Intro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="session.html">SparkSession</a></li>
+<li class="toctree-l1"><a class="reference internal" href="container.html">SparkContainer</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Models</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#sparkpy-models-module">sparkpy.models module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sparkpy.models.room">SparkRoom</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sparkpy.models.message">SparkMessage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sparkpy.models.people">SparkPeople</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sparkpy.models.team">SparkTeam</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sparkpy.models.membership">SparkMembership</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sparkpy.models.webhook">SparkWebhook</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sparkpy.models.role">SparkRole</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sparkpy.models.license">SparkLicense</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-sparkpy.models.organization">SparkOrganization</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="container.html" title="previous chapter">SparkContainer</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Paul Anholt.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/models.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

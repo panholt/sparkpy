@@ -1,0 +1,8 @@
+{
+  "tests/test_room.py::test_add_person_by_email": true,
+  "tests/test_room.py::test_add_person_by_id": true,
+  "tests/test_room.py::test_remove_person_by_email": true,
+  "tests/test_room.py::test_remove_person_by_id": true,
+  "tests/test_room.py::test_room_create": true,
+  "tests/test_room.py::test_room_rename": true
+}
