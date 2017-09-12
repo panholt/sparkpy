@@ -7,7 +7,6 @@
 '''
 
 import logging
-from .spark import Spark
 
 # set up logging to file - see previous section for more details
 logging.basicConfig(level=logging.DEBUG,

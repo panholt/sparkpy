@@ -5,3 +5,17 @@ sparkpy/__version__.py
 sparkpy/session.py
 sparkpy/spark.py
 sparkpy/utils.py
+sparkpy/exceptions/spark_exceptions.py
+sparkpy/models/base.py
+sparkpy/models/container.py
+sparkpy/models/file.py
+sparkpy/models/license.py
+sparkpy/models/membership.py
+sparkpy/models/message.py
+sparkpy/models/organization.py
+sparkpy/models/people.py
+sparkpy/models/role.py
+sparkpy/models/room.py
+sparkpy/models/team.py
+sparkpy/models/time.py
+sparkpy/models/webhook.py
