@@ -1,24 +1,73 @@
+'''
+sparkpy.models.container
+~~~~~~~~~~~~~~
+A generator like container that follows Cisco Spark's paginated responses
+
+The container also allows implements list style lookups and slicing, as well as
+dicationary style lookups with the Cisco Spark API ids. When dictionary lookups
+are made, the object attributes are lazy loaded and only fetched when accessed.
+
+Usage:
+    >>> # Iterate over all rooms
+    >>> for room in spark.rooms:
+        ... print(room)
+    >>> # Access the most recently created room
+    >>> room = spark.rooms[0]
+    >>> # dictionary style lookup
+    >>> room = spark.rooms['...'] # Some room id
+    >>> # Room is lazy loaded, so no attributes are set
+    >>> room.__dict__
+        {'_id': '...',
+         '_loaded': False,
+         '_loaded_at': None,
+         '_parent': Spark("..."),
+         '_path': 'rooms',
+         '_uuid': '...'}
+    >>> # Access an attribute to load the room's attributes
+    >>> room.title
+    >>> 'The title of the room'
+    >>> room.__dict__
+        {'_created': '2017-08-26T12:01:36.373Z',
+         '_id': '...',
+         '_lastActivity': '2017-08-26T15:52:27.002Z',
+         '_loaded': True,
+         '_loaded_at': 2017-09-03T22:58:54.245Z,
+         '_parent': Spark("..."),
+         '_path': 'rooms',
+         '_uuid': '...',
+         'creatorId': '...',
+         'isLocked': None,
+         'sipAddress': '...@meet.ciscospark.com',
+         'teamId': None,
+         'title': 'The title of the room',
+         'type': 'group'}
+'''
+
 import re
 from collections import deque
 from .time import SparkTime
 from json.decoder import JSONDecodeError
-from ..utils import is_api_id
+from ..utils import is_api_id, is_uuid
 
 
 class SparkContainer(object):
-    ''' Generator container for Cisco Spark items
-        Supports list style indexing, dict style lookups of `id`, and slicing.
-        :param session: SparkSession object
-        :type session: `SparkSession`
-        :param cls: Class of items in container
-        :param params: Any additional params to use on the generator
-        :type params: dict
-        :param parent: The parent of the container
-        Attributes:
-            _length_map (dict): Mapping to keep length hints across containers
-        .. note:: Calling len or providing negative indicies
-                  will result in the generator being depleated.
-                  This could lead to excess API calls.
+    '''
+    Generator container for Cisco Spark items
+    Supports list style indexing, dict style lookups of `id`, and slicing.
+
+    :param session: SparkSession object
+    :type session: `SparkSession`
+    :param cls: Class of items in container
+    :param params: Any additional params to use on the generator
+    :type params: dict
+    :param parent: The parent of the container
+
+    Attributes:
+        _length_map (dict): Mapping to keep length hints across containers
+
+    .. note:: Calling len or providing negative indicies
+              will result in the generator being depleated.
+              This could lead to excessive API calls.
     '''
 
     _length_map = {}
@@ -31,23 +80,33 @@ class SparkContainer(object):
 
     @property
     def cls(self):
-        ''' The class obect used for items in the container '''
+        ''' The class used for items in the container '''
         return self._cls
 
     @property
     def params(self):
-        ''' Any additional URL paramaters to be included when
-            creating the generator.
+        '''
+        Any additional URL paramaters to be included when
+        creating the generator.
+
+        :type params: `dict`
         '''
         return self._params
 
     @property
     def parent(self):
-        ''' The parent object of the container '''
+        '''
+        The parent object of the container. This is either the
+        :class:`Spark <Spark>` instance,
+        a :class:`SparkRoom <SparkRoom>` for :class:`SparkMembership <SparkMembership>`
+        and :class:`SparkMessage <SparkMessage>` objects associated to the room,
+        or a :class:`SparkTeam <SparkTeam>` for team subrooms
+        '''
         return self._parent
 
     @property
     def session(self):
+        ''' Reference to the :class:`Spark <Spark>` instance session '''
         return self._session
 
     @property
@@ -57,15 +116,24 @@ class SparkContainer(object):
         return f'{self.cls}'
 
     def find(self, key, regexp, re_flags=None):
-        ''' For every item within the container
-            search the value of a given key for a provided query
-            :param key: Search key
-            :type key: str
-            :param regexp: Search string, accepts regular expressions
-            :type regexp: str
-            :param re_flags: (Optional) Regular expression flags
-            :type re_flags: re.flags
-            :yields: Any items in the continer matching the search.
+        '''
+        For every item within the container
+        search the value of a given key for a provided query
+
+        :param key: Search key
+        :type key: str
+        :param regexp: Search string, accepts regular expressions
+        :type regexp: str
+        :param re_flags: (Optional) Regular expression flags
+        :type re_flags: re.flags
+        :yields: Any items in the container matching the search.
+
+        Usage:
+            >>> # Find all rooms with 'lunch' in the title
+            >>> rooms = spark.rooms.find('title', 'lunch')
+            >>> # Or, a more advanced search
+            >>> rooms = spark.rooms.find('title', '^.*lunch.*$', re_flags=re.I)
+
         '''
         if re_flags:
             pattern = re.compile(regexp, re_flags)
@@ -76,10 +144,16 @@ class SparkContainer(object):
                 yield item
 
     def filtered(self, expr):
-        ''' Generator returning every item in container where expr(item)
-            :param expr: Expression
-            :type expr: expr
-            :yields: Any items in the continer where `expr(item)`
+        '''
+        Generator returning every item in container where expr(item)
+
+        :param expr: Expression
+        :type expr: expr
+        :yields: Any items in the continer where `expr(item)`
+
+        Usage:
+            >>> # Find all locked rooms
+            >>> rooms = spark.rooms.filtered(lambda room: room.isLocked)
         '''
         for item in self.__make_iter():
             if expr(item):

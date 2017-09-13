@@ -29,6 +29,12 @@ SparkMessage
     :members:
     :show-inheritance:
 
+SparkFile
+-----------------------
+.. automodule:: sparkpy.models.file
+    :members:
+    :show-inheritance:
+
 SparkPeople
 -----------------------
 .. automodule:: sparkpy.models.people

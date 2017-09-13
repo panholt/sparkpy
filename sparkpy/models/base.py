@@ -1,7 +1,7 @@
 '''
 sparkpy.models.base
-~~~~~~~~~~~~~~
-Abstract Base Class for all sparkpy models
+~~~~~~~~~~~~~~~~~~~
+Contains classes to build base Cisco Spark models
 '''
 
 import logging
@@ -16,7 +16,7 @@ log = logging.getLogger('sparkpy.base')
 class SparkBase(ABC, object):
     '''
     Abstract Base Class for all sparkpy models. Contains class and instance
-    attributes
+    attributes describing the various Cisco Spark objects.
     '''
 
     @abstractproperty
@@ -29,12 +29,12 @@ class SparkBase(ABC, object):
     def PROPERTIES(self):
         '''
         Class attribute which returns a dictionary of the API properties of
-        the resouce
+        the resource
         '''
         pass
 
     def __init__(self, *args, **kwargs):
-        self._id = kwargs['id']
+        self._id = ''
         self._path = kwargs.pop('path')
         self._parent = kwargs.pop('parent', None)
         self._uuid = None
@@ -42,14 +42,14 @@ class SparkBase(ABC, object):
         self._loaded_at = None
         if args:
             self._load_from_id(*args)
+        elif 'id' in kwargs:
+            self._id = kwargs['id']
+            self._load_data(kwargs)
         else:
-            if self.id:
-                _id = decode_api_id(self.id)
-                self._uuid = _id['uuid']
-                self._path = _id['path']
-                self._load_data(kwargs)
-            else:
-                raise ValueError('A valid Spark ID is required')
+            raise ValueError('A valid Spark ID is required')
+        _id = decode_api_id(self.id)
+        self._uuid = _id['uuid']
+        self._path = _id['path']
 
     @property
     def id(self):
@@ -126,22 +126,23 @@ class SparkBase(ABC, object):
 
     @abstractmethod
     def update(self, data):
-        ''' Parent class must implement this method to accept
-            a mapping of updates and process them accoringly.
+        '''
+        Parent class must implement this method to accept
+        a mapping of updates and process them accoringly.
 
-            :note:
-            Parent class must be able to handle updates for any
-            properties defined as mutable in class.properties
+        .. note:: Parent class must be able to handle updates for any
+                  properties defined as mutable in class.properties
 
-            :arg data: A dictionary of updates
-            :raises: `ValueError` or `AttributeError`
-            :return: None
+        :arg data: A dictionary of updates
+        :raises: `ValueError` or `AttributeError`
+        :return: None
         '''
         pass
 
     def _fetch_data(self):
-        ''' Query the Cisco Spark API to retrieve
-            and load the objects properties
+        '''
+        Query the Cisco Spark API to retrieve
+        and load the objects properties
         '''
 
         with SparkSession() as s:
@@ -151,8 +152,9 @@ class SparkBase(ABC, object):
         return
 
     def _load_data(self, data):
-        ''' Load the data provided as **kwargs
-            From the properties defined in self.PROPERTIES
+        '''
+        Load the data provided as **kwargs
+        From the properties defined in self.PROPERTIES
         '''
         # keep a clean __setattr__
         setter = super().__setattr__
@@ -181,14 +183,14 @@ class SparkBase(ABC, object):
         return
 
     def _load_from_id(self, _id):
-        ''' Processes the arg if provided.
+        '''
+        Processes the arg if provided.
 
-            Sets self.id and self.path
+        Sets self.id and self.path
 
-            :param _id: If uuid is provided then
-                        the spark apis will be queried in an attempt
-                        to determine the proper type.
-            :type _id: str
+        :param _id: If uuid is provided then the spark apis will be queried
+        in an attempt to determine the proper type.
+        :type _id: str
         '''
 
         if _id.startswith('Y2lzY29zcGFyazovL'):
@@ -213,10 +215,11 @@ class SparkBase(ABC, object):
         return
 
     def delete(self):
-        ''' Delete the Spark API object
+        '''
+        Delete the Spark API object
 
-            Override to raise NotImplemented if
-            the parent class does not have a delete method
+        Override to raise NotImplemented if
+        the parent class does not have a delete method
 
         :return: None
         :raises: `SparkException`
@@ -228,18 +231,19 @@ class SparkBase(ABC, object):
                 raise Exception()
 
     def __getattribute__(self, name):
-        ''' Hook into `__getattribute__` for lazy loading of valid attributes
+        '''
+        Hook into `__getattribute__` for lazy loading of valid attributes
 
-             Calls `self.__getattribute__(name)` and
-             if the result is `None` or `AttributeError`, and
-             the `name` is present in `self.PROPERTIES.keys()` then
-             query the Cisco Spark API and set the properties.
+        Calls `self.__getattribute__(name)` and
+        if the result is `None` or `AttributeError`, and
+        the `name` is present in `self.PROPERTIES.keys()` then
+        query the Cisco Spark API and set the properties.
 
-             Then calls `self.__getattribute__(name)` again
-             and returns the property if it found.
+        Then calls `self.__getattribute__(name)` again
+        and returns the property if it found.
 
-             If the property is still None then and it is optional then `None`
-             is returned, otherwise a `TypeError` is raised
+        If the property is still None then and it is optional then `None`
+        is returned, otherwise a `TypeError` is raised
 
 
         :return: None
@@ -320,6 +324,9 @@ class SparkBase(ABC, object):
 
 
 class SparkProperty(object):
+    '''
+    Class that represents a Cisco Spark API property
+    '''
 
     def __init__(self, prop, mutable=False, cls=None, optional=False):
         self._prop = prop
@@ -329,18 +336,38 @@ class SparkProperty(object):
 
     @property
     def prop(self):
+        '''
+        The property name
+
+        :return: The property name
+        :rtype: string
+        '''
         return self._prop
 
     @property
     def mutable(self):
+        '''
+        Indicates whether the property is mutable
+
+        :return: Boolean indicating mutablity of the property
+        :rtype: bool
+        '''
         return self._mutable
 
     @property
     def cls(self):
+        '''
+        Used to cast the property as a certain class
+        '''
         return self._cls
 
     @property
     def optional(self):
+        '''
+        Indicates whether the property is optional
+
+        :type: bool
+        '''
         return self._optional
 
     def __repr__(self):
