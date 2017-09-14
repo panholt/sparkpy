@@ -16,7 +16,7 @@ class SparkMessage(SparkBase):
     PROPERTIES = {'id': SparkProperty('id'),
                   'roomId': SparkProperty('roomId'),
                   'roomType': SparkProperty('roomType'),
-                  'text': SparkProperty('text'),
+                  'text': SparkProperty('text', optional=True),
                   'markdown': SparkProperty('markdown', optional=True),
                   'html': SparkProperty('html', optional=True),
                   'personId': SparkProperty('personId'),
@@ -24,7 +24,9 @@ class SparkMessage(SparkBase):
                   'created': SparkProperty('created', cls=SparkTime),
                   'files': SparkProperty('files',
                                          optional=True,
-                                         cls=SparkFile)}
+                                         cls=SparkFile),
+                  'mentionedPeople': SparkProperty('mentionedPeople',
+                                                   optional=True)}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='messages', **kwargs)
