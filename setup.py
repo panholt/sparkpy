@@ -9,4 +9,5 @@ setup(
     license='MIT',
     url='https://github.com/panholt/sparkpy',
     long_description=open('README.rst').read(),
+    install_requires=['requests', 'requests-toolbelt']
 )
