@@ -8,6 +8,17 @@
 
 import logging
 from .spark import Spark
+from .models.file import SparkFile
+from .models.license import SparkLicense
+from .models.message import SparkMessage
+from .models.organization import SparkOrganization
+from .models.people import SparkPerson
+from .models.role import SparkRole
+from .models.team import SparkTeam
+from .models.webhook import SparkWebhook
+from .models.membership import SparkMembership, SparkTeamMembership
+
+
 # set up logging to file - see previous section for more details
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
@@ -23,3 +34,15 @@ formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
 console.setFormatter(formatter)
 # add the handler to the root logger
 logging.getLogger('').addHandler(console)
+
+__all__ = ['Spark',
+           'SparkFile',
+           'SparkLicense',
+           'SparkMembership',
+           'SparkMessage',
+           'SparkOrganization',
+           'SparkPerson',
+           'SparkRole',
+           'SparkTeam',
+           'SparkTeamMembership',
+           'SparkWebhook']
