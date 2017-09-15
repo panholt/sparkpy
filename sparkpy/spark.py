@@ -281,7 +281,7 @@ class Spark(object):
         if secret:
             data['secret'] = secret
         with SparkSession() as s:
-            hook = self.session.post('https://api.ciscospark/com/v1/webhooks',
+            hook = self.session.post('https://api.ciscospark.com/v1/webhooks',
                                      json=data)
             return SparkWebhook(**hook.json())
 
