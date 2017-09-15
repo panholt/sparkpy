@@ -139,7 +139,7 @@ class SparkRoom(SparkBase):
 
             :return: None
         '''
-        for member in self.members.filtered(lambda x: x != self.session.id):
+        for member in self.members.filtered(lambda x: x != self.session.me.id):
             member.delete()
         return
 

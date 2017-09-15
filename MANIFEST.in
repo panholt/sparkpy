@@ -1,2 +1,0 @@
-recursive-include sparkpy/models *.py
-recursive-include sparkpy/exceptions *.py

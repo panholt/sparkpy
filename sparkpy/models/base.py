@@ -224,11 +224,12 @@ class SparkBase(ABC, object):
         :return: None
         :raises: `SparkException`
         '''
-        with SparkSession() as s:
-            response = s.delete(self.url)
-            if response.status_code != 204:
-                # TODO Exceptions
-                raise Exception()
+        response = self.parent.session.delete(self.url)
+        if response.status_code != 204:
+            # TODO Exceptions
+            req_headers = response.request.headers
+            req_url = response.request.url
+            raise Exception(f'{req_url}: {req_headers}')
 
     def __getattribute__(self, name):
         '''

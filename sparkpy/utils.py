@@ -17,7 +17,7 @@ url2api = {'messages': 'MESSAGE',
            'memberships': 'MEMBERSHIP',
            'teams': 'TEAM',
            'team/memberships': 'TEAM_MEMBERSHIP',
-           'webhook': 'WEBHOOK',
+           'webhooks': 'WEBHOOK',
            'organizations': 'ORGANIZATION',  # Unsure about these
            'licenses': 'LICENSE',
            'roles': 'ROLE'}
@@ -28,7 +28,7 @@ api2url = {'MESSAGE': 'messages',
            'MEMBERSHIP': 'memberships',
            'TEAM': 'teams',
            'TEAM_MEMBERSHIP': 'team/memberships',
-           'WEBHOOK': 'webhook',
+           'WEBHOOK': 'webhooks',
            'ORGANIZATION': 'organizations',  # Unsure about these
            'LICENSE': 'licenses',
            'ROLE': 'roles'}

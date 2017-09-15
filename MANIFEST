@@ -5,8 +5,6 @@ sparkpy/__version__.py
 sparkpy/session.py
 sparkpy/spark.py
 sparkpy/utils.py
-sparkpy/exceptions/spark_exceptions.py
-sparkpy/models/__init__.py
 sparkpy/models/base.py
 sparkpy/models/container.py
 sparkpy/models/file.py
