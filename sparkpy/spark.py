@@ -32,9 +32,8 @@ from .models.room import SparkRoom
 from .models.team import SparkTeam
 from .models.people import SparkPerson
 from .models.webhook import SparkWebhook
-from json.decoder import JSONDecodeError
 from .models.container import SparkContainer
-
+from json.decoder import JSONDecodeError
 
 class Spark(object):
     '''
@@ -85,6 +84,8 @@ class Spark(object):
     @property
     def me(self):
         ''' :class:`SparkPerson <SparkPerson>` of the token's owner '''
+        if self._me is None:
+            self._fetch_self()
         return self._me
 
     @property
