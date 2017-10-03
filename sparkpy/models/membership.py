@@ -19,8 +19,10 @@ class SparkMembership(SparkBase):
                   'personEmail': SparkProperty('personEmail'),
                   'personOrgId': SparkProperty('personOrgId'),
                   'personDisplayName': SparkProperty('personDisplayName'),
-                  'isModerator': SparkProperty('isModerator', mutable=True),
-                  'isMonitor': SparkProperty('isMonitor'),
+                  'isModerator': SparkProperty('isModerator',
+                                               mutable=True,
+                                               optional=True),
+                  'isMonitor': SparkProperty('isMonitor', optional=True),
                   'created': SparkProperty('created', cls=SparkTime)}
 
     def __init__(self, *args, **kwargs):

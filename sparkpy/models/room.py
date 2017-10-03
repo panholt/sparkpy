@@ -108,9 +108,7 @@ class SparkRoom(SparkBase):
             data['personEmail'] = email
         if moderator:
             data['isModerator'] = moderator
-
-        with SparkSession() as s:
-            s.post(self.API_BASE, json=data)
+        self.parent.post(SparkMembership.API_BASE, json=data)
         return
 
     def remove_member(self, *args, email=''):
@@ -139,7 +137,7 @@ class SparkRoom(SparkBase):
 
             :return: None
         '''
-        for member in self.members.filtered(lambda x: x != self.session.me.id):
+        for member in self.members.filtered(lambda x: x != self.parent.me.id):
             member.delete()
         return
 
