@@ -49,11 +49,13 @@ class SparkTeamMembership(SparkBase):
                   'personEmail': SparkProperty('personEmail'),
                   'personOrgId': SparkProperty('personOrgId'),
                   'personDisplayName': SparkProperty('personDisplayName'),
-                  'isModerator': SparkProperty('isModerator', mutable=True),
+                  'isModerator': SparkProperty('isModerator',
+                                               mutable=True,
+                                               optional=True),
                   'created': SparkProperty('created', cls=SparkTime)}
 
     def __init__(self, *args, **kwargs):
-        super().__init__(args[0], path='team/memberships', **kwargs)
+        super().__init__(*args, path='team/memberships', **kwargs)
 
     def update(self, key, value):
         if key == 'isModerator':

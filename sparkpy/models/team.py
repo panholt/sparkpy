@@ -24,6 +24,30 @@ class SparkTeam(SparkBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='teams', **kwargs)
 
+    @property
+    def link(self):
+        return f'https://web.ciscospark.com/teams/{self.id}'
+
+    @property
+    def members(self):
+        ''' Members of the Cisco Spark Room
+
+            :getter: a generator like object of members of the room
+            :type: `SparkContainer` of `SparkPeople` items
+        '''
+        return SparkContainer(SparkTeamMembership,
+                              params={'teamId': self.id},
+                              parent=self,
+                              session=self.parent.session)
+
+    @property
+    def subrooms(self):
+        '''SparkContainer:`SparkRoom` Generator of members of the team. '''
+        return SparkContainer(SparkRoom,
+                              params={'teamId': self.id,'sortBy': 'id'},
+                              parent=self,
+                              session=self.parent.session)
+
     def update(self, key, value):
         if key == 'name' and len(value):
             with SparkSession() as s:
@@ -87,32 +111,8 @@ class SparkTeam(SparkBase):
             member.delete()
         return
 
-    @property
-    def link(self):
-        return f'https://web.ciscospark.com/teams/{self.id}'
-
-    @property
-    def members(self):
-        '''SparkContainer:`SparkTeamMembership`
-           Generator of members of the team.'''
-
-        return SparkContainer(SparkTeamMembership,
-                              params={'teamId': self.id},
-                              parent=self)
-
-    @property
-    def subrooms(self):
-        '''SparkContainer:`SparkRoom`
-           Generator of members of the team.'''
-
-        return SparkContainer(SparkRoom,
-                              params={'teamId': self.id,
-                                      'sortBy': 'id'},
-                              parent=self)
-
     def __str__(self):
         return f'SparkTeam("{self.name}")'
 
     def __repr__(self):
         return f'SparkTeam("{self.id}")'
-
