@@ -46,7 +46,7 @@ class SparkPerson(SparkBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='people', **kwargs)
-        self._org = None
+        self._org = SparkOrganization(self.orgId)
 
     @property
     def email(self):
@@ -56,8 +56,6 @@ class SparkPerson(SparkBase):
 
     @property
     def org(self):
-        if self._org is None:
-            self._org = SparkOrganization(self.orgId)
         return self._org
 
     def update(self,
