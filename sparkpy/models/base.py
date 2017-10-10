@@ -329,10 +329,10 @@ class SparkProperty(object):
     Class that represents a Cisco Spark API property
     '''
 
-    def __init__(self, prop, mutable=False, cls=None, optional=False):
+    def __init__(self, prop, mutable=False, item_class=None, optional=False):
         self._prop = prop
         self._mutable = mutable
-        self._cls = cls
+        self._item_class = item_class
         self._optional = optional
 
     @property
@@ -356,11 +356,11 @@ class SparkProperty(object):
         return self._mutable
 
     @property
-    def cls(self):
+    def item_class(self):
         '''
         Used to cast the property as a certain class
         '''
-        return self._cls
+        return self._item_class
 
     @property
     def optional(self):

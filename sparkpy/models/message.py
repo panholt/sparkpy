@@ -3,6 +3,7 @@
 from .base import SparkBase, SparkProperty
 from .time import SparkTime
 from .file import SparkFile
+from .people import SparkPerson
 
 
 class SparkMessage(SparkBase):
@@ -21,12 +22,13 @@ class SparkMessage(SparkBase):
                   'html': SparkProperty('html', optional=True),
                   'personId': SparkProperty('personId'),
                   'personEmail': SparkProperty('personEmail'),
-                  'created': SparkProperty('created', cls=SparkTime),
+                  'created': SparkProperty('created'),
                   'files': SparkProperty('files',
                                          optional=True,
-                                         cls=SparkFile),
+                                         item_class=SparkFile),
                   'mentionedPeople': SparkProperty('mentionedPeople',
-                                                   optional=True)}
+                                                   optional=True,
+                                                   item_class=SparkPerson)}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='messages', **kwargs)

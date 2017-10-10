@@ -23,7 +23,7 @@ class SparkMembership(SparkBase):
                                                mutable=True,
                                                optional=True),
                   'isMonitor': SparkProperty('isMonitor', optional=True),
-                  'created': SparkProperty('created', cls=SparkTime)}
+                  'created': SparkProperty('created')}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='memberships', **kwargs)
@@ -52,7 +52,7 @@ class SparkTeamMembership(SparkBase):
                   'isModerator': SparkProperty('isModerator',
                                                mutable=True,
                                                optional=True),
-                  'created': SparkProperty('created', cls=SparkTime)}
+                  'created': SparkProperty('created')}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='team/memberships', **kwargs)

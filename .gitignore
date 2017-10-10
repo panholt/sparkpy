@@ -106,3 +106,7 @@ ENV/
 # Sublime Text
 *.sublime-workspace
 *.sublime-project
+
+#  Pipenv
+PipFile
+PipFile.lock

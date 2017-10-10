@@ -2,6 +2,7 @@
 
 from .base import SparkBase, SparkProperty
 from .time import SparkTime
+from .organization import SparkOrganization
 from ..session import SparkSession
 
 
@@ -17,8 +18,7 @@ class SparkPerson(SparkBase):
                                           optional=True,
                                           mutable=True),
                   'orgId': SparkProperty('orgId'),
-                  'created': SparkProperty('created',
-                                           cls=SparkTime),
+                  'created': SparkProperty('created'),
                   'type': SparkProperty('type'),
                   'firstName': SparkProperty('firstName',
                                              optional=True,
@@ -30,8 +30,7 @@ class SparkPerson(SparkBase):
                                             optional=True,
                                             mutable=True),
                   'lastActivity': SparkProperty('lastActivity',
-                                                optional=True,
-                                                cls=SparkTime),
+                                                optional=True),
                   'status': SparkProperty('status', optional=True),
                   'licenses': SparkProperty('licenses',
                                             optional=True,
@@ -41,25 +40,25 @@ class SparkPerson(SparkBase):
                   'timezone': SparkProperty('timezone',
                                             optional=True),
                   'invitePending': SparkProperty('invitePending',
-                                                 optional=True,
-                                                 cls=bool),
+                                                 optional=True),
                   'loginEnabled': SparkProperty('loginEnabled',
-                                                optional=True,
-                                                cls=bool)}
+                                                optional=True)}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='people', **kwargs)
-
-        # Start of instance attributes |--------------------------------------|
-        self._email = None
+        self._org = None
 
     @property
     def email(self):
         # Emails is returned as an array but will
         # only ever have one entry.. or now anyway
-        if not self._email:
-            self._email = self.emails[0]
-        return self._email
+        return self.emails[0]
+
+    @property
+    def org(self):
+        if self._org is None:
+            self._org = SparkOrganization(self.orgId)
+        return self.org
 
     def update(self,
                emails=None,

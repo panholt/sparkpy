@@ -19,7 +19,7 @@ class SparkTeam(SparkBase):
     PROPERTIES = {'id': SparkProperty('id'),
                   'name': SparkProperty('name', mutable=True),
                   'creatorId': SparkProperty('creatorId'),
-                  'created': SparkProperty('created', cls=SparkTime)}
+                  'created': SparkProperty('created')}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='teams', **kwargs)

@@ -14,7 +14,7 @@ class SparkOrganization(SparkBase):
     API_BASE = 'https://api.ciscospark.com/v1/organizations/'
     PROPERTIES = {'id': SparkProperty('id'),
                   'name': SparkProperty('name'),
-                  'created': SparkProperty('created', cls=SparkTime)}
+                  'created': SparkProperty('created')}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, path='organizations', **kwargs)
