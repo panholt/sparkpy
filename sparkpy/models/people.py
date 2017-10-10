@@ -58,7 +58,7 @@ class SparkPerson(SparkBase):
     def org(self):
         if self._org is None:
             self._org = SparkOrganization(self.orgId)
-        return self.org
+        return self._org
 
     def update(self,
                emails=None,
