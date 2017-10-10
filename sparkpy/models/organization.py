@@ -13,7 +13,7 @@ class SparkOrganization(SparkBase):
 
     API_BASE = 'https://api.ciscospark.com/v1/organizations/'
     PROPERTIES = {'id': SparkProperty('id'),
-                  'name': SparkProperty('name'),
+                  'displayName': SparkProperty('displayName'),
                   'created': SparkProperty('created')}
 
     def __init__(self, *args, **kwargs):
@@ -24,6 +24,3 @@ class SparkOrganization(SparkBase):
 
     def __repr__(self):
             return f'SparkOrganization("{self.id}")'
-
-    def __str__(self):
-            return f'SparkOrganization({self.displayName})'

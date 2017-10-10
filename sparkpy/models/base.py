@@ -6,7 +6,6 @@ Contains classes to build base Cisco Spark models
 
 import logging
 from abc import ABC, abstractproperty, abstractmethod
-from ..session import SparkSession
 from ..models.time import SparkTime
 from ..utils import decode_api_id, is_uuid, is_api_id, uuid_to_api_id
 
@@ -145,10 +144,12 @@ class SparkBase(ABC, object):
         and load the objects properties
         '''
 
-        with SparkSession() as s:
-            resp = s.get(self.url)
+        if self.parent:
+            resp = self._get_session().get(self.url)
             if resp.status_code == 200:
                 self._load_data(resp.json())
+        else:
+            raise Exception('Cannot fetch data without a session')
         return
 
     def _load_data(self, data):
@@ -167,6 +168,10 @@ class SparkBase(ABC, object):
         for key, properties in self.PROPERTIES.items():
             value = data.get(key)
             if value:
+                if properties.item_class and isinstance(value, list):
+                    value = [properties.item_class(item, 
+                                                   parent=self._get_parent())
+                             for item in value]
                 setter(key, value)
             elif properties.optional:
                 setter(key, None)
@@ -211,8 +216,17 @@ class SparkBase(ABC, object):
                     return
             else:
                 raise ValueError('Spark API ID or a UUIDv4 string required')
-
         return
+
+    def _get_session(self):
+        return self._get_parent().session
+
+    def _get_parent(self):
+        parent = getattr(self, 'parent', None)
+        while getattr(parent, 'parent', None):
+            parent = parent.parent
+        return parent
+
 
     def delete(self):
         '''
@@ -224,7 +238,7 @@ class SparkBase(ABC, object):
         :return: None
         :raises: `SparkException`
         '''
-        response = self.parent.session.delete(self.url)
+        response = self._get_session().delete(self.url)
         if response.status_code != 204:
             # TODO Exceptions
             req_headers = response.request.headers
@@ -279,7 +293,7 @@ class SparkBase(ABC, object):
             if prop.optional:
                 return None
             else:
-                raise TypeError(f'{self} needs keyword-only argument {key}')
+                raise TypeError(f'{self} needs keyword-only argument {name}')
 
     def __setattr__(self, key, value):
         setter = super().__setattr__

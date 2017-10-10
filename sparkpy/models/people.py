@@ -1,9 +1,10 @@
-# -*- coding: utf-8 -*-
-
+import logging
 from .base import SparkBase, SparkProperty
 from .time import SparkTime
 from .organization import SparkOrganization
 from ..session import SparkSession
+
+log = logging.getLogger('sparkpy.people')
 
 
 class SparkPerson(SparkBase):
@@ -45,8 +46,8 @@ class SparkPerson(SparkBase):
                                                 optional=True)}
 
     def __init__(self, *args, **kwargs):
+        self._org = ''
         super().__init__(*args, path='people', **kwargs)
-        self._org = SparkOrganization(self.orgId)
 
     @property
     def email(self):
@@ -56,6 +57,11 @@ class SparkPerson(SparkBase):
 
     @property
     def org(self):
+        log.debug('org property accessed')
+        if getattr(self, '_org', '') == '':
+            log.debug('Org is none')
+            self._org = SparkOrganization(self.orgId, parent=self._get_parent())
+            log.debug('set org')
         return self._org
 
     def update(self,
@@ -69,10 +75,9 @@ class SparkPerson(SparkBase):
                licenses=None):
 
         updates = {k: v for k, v in locals().items() if k != 'self' and v}
-        with SparkSession() as s:
-            existing_data = s.get(self.url).json()
-            existing_data.update(updates)
-            s.put(self.url, json=existing_data)
+        existing_data = self.parent.session.get(self.url).json()
+        existing_data.update(updates)
+        self.parent.session.put(self.url, json=existing_data)
         return
 
     def __repr__(self):
