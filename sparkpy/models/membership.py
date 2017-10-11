@@ -2,7 +2,6 @@
 
 from .base import SparkBase, SparkProperty
 from .time import SparkTime
-from ..session import SparkSession
 
 
 class SparkMembership(SparkBase):
@@ -30,8 +29,7 @@ class SparkMembership(SparkBase):
 
     def update(self, key, value):
         if key == 'isModerator':
-            with SparkSession() as s:
-                s.put(self.url, json={key: value})
+            self.parent.session.put(self.url, json={key: value})
         return
 
 
@@ -59,8 +57,7 @@ class SparkTeamMembership(SparkBase):
 
     def update(self, key, value):
         if key == 'isModerator':
-            with SparkSession() as s:
-                s.put(self.url, json={key: value})
+            self.parent.session.put(self.url, json={key: value})
         return
 
     def __repr__(self):

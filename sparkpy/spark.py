@@ -51,7 +51,7 @@ class Spark(object):
     def __init__(self, token=None):
         self._id = None
         self._me = None
-        self._is_bot = True
+        self._is_bot = None
         if token:
             self._session = SparkSession(token)
         else:
@@ -280,10 +280,9 @@ class Spark(object):
             data['filter'] = filter
         if secret:
             data['secret'] = secret
-        with SparkSession() as s:
-            hook = self.session.post('https://api.ciscospark.com/v1/webhooks',
-                                     json=data)
-            return SparkWebhook(**hook.json())
+        hook = self.session.post('https://api.ciscospark.com/v1/webhooks',
+                                 json=data)
+        return SparkWebhook(**hook.json())
 
     def send_message(self,
                      text,
@@ -330,30 +329,29 @@ class Spark(object):
                              or email address')
 
         # Chunk and send the message
-        with SparkSession() as s:
-            while len(text) > 7000:  # Technically 7439
-                split_idx = text.rfind('\n', 1, 6999)
-                if split_idx == -1:
-                    split_idx = 7000
-                data = {'markdown': text[:split_idx]}
-                data.update(base_data)
-                # Send any files waiting
-                if file:
-                    self.session.send_file(file, data)
-                    # TODO make this a list or something
-                    file = None
-                else:
-                    self.session.post('https://api.ciscospark.com/v1/messages',
-                                      json=data)
-                text = text[split_idx:]
+        while len(text) > 7000:  # Technically 7439
+            split_idx = text.rfind('\n', 1, 6999)
+            if split_idx == -1:
+                split_idx = 7000
+            data = {'markdown': text[:split_idx]}
+            data.update(base_data)
+            # Send any files waiting
+            if file:
+                self.session.send_file(file, data)
+                # TODO make this a list or something
+                file = None
             else:
-                data = {'markdown': text}
-                data.update(base_data)
-                if file:
-                    self.session.send_file(file, data)
-                    return
                 self.session.post('https://api.ciscospark.com/v1/messages',
                                   json=data)
+            text = text[split_idx:]
+        else:
+            data = {'markdown': text}
+            data.update(base_data)
+            if file:
+                self.session.send_file(file, data)
+                return
+            self.session.post('https://api.ciscospark.com/v1/messages',
+                              json=data)
             return
 
     def __repr__(self):

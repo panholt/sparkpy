@@ -5,7 +5,6 @@ from .time import SparkTime
 from .membership import SparkTeamMembership
 from .container import SparkContainer
 from .room import SparkRoom
-from ..session import SparkSession
 
 
 class SparkTeam(SparkBase):
@@ -38,7 +37,7 @@ class SparkTeam(SparkBase):
         return SparkContainer(SparkTeamMembership,
                               params={'teamId': self.id},
                               parent=self,
-                              session=self.parent.session)
+                              session=self.session)
 
     @property
     def subrooms(self):
@@ -46,17 +45,16 @@ class SparkTeam(SparkBase):
         return SparkContainer(SparkRoom,
                               params={'teamId': self.id,'sortBy': 'id'},
                               parent=self,
-                              session=self.parent.session)
+                              session=self.session)
 
     def update(self, key, value):
         if key == 'name' and len(value):
-            with SparkSession() as s:
-                s.put(self.url, json={key: value})
+            self.parent.session.put(self.url, json={key: value})
         return
 
     def create_subroom(self, title):
-        with SparkSession() as s:
-            s.create_room(title, team_id=self.id)
+        self.parent.session.create_room(title, team_id=self.id)
+        return
 
     def add_member(self, _id, email='', moderator=False):
         ''' Add a person to the team
@@ -77,8 +75,7 @@ class SparkTeam(SparkBase):
         if moderator:
             data['isModerator'] = moderator
 
-        with SparkSession() as s:
-            s.post('team/memberships', json=data)
+        self.parent.session.post('team/memberships', json=data)
         return
 
     def remove_member(self, _id, email=''):

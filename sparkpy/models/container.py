@@ -44,18 +44,17 @@ Usage:
 '''
 
 import re
-from collections import deque
+from collections import MutableSequence
 from .time import SparkTime
 from json.decoder import JSONDecodeError
 from ..utils import is_api_id, is_uuid
 
 
-class SparkContainer(object):
+class SparkContainer(MutableSequence):
     '''
     Generator container for Cisco Spark items
     Supports list style indexing, dict style lookups of `id`, and slicing.
 
-    :param session: SparkSession object
     :type session: `SparkSession`
     :param cls: Class of items in container
     :param params: Any additional params to use on the generator
@@ -72,11 +71,16 @@ class SparkContainer(object):
 
     _length_map = {}
 
-    def __init__(self, cls, params={}, parent=None, session=None):
+    def __init__(self, cls, params={}, parent=None, per_page=50):
         self._cls = cls
         self._params = params
+        self.params['max'] = per_page
         self._parent = parent
-        self._session = session or self.parent.session
+        self._items = list()
+        self._next_page = None
+        self._load_items()
+        self._loaded = False
+        self._loaded_at = None
 
     @property
     def cls(self):
@@ -105,15 +109,78 @@ class SparkContainer(object):
         return self._parent
 
     @property
-    def session(self):
-        ''' Reference to the :class:`Spark <Spark>` instance session '''
-        return self._session
+    def per_page(self):
+        return self._per_page
 
     @property
-    def _key(self):
-        if self.parent:
-            return f'{self.parent.id}:{self.cls}'
-        return f'{self.cls}'
+    def next_page(self):
+        return self._next_page
+
+    def more(self, *args):
+        self._load_items()
+        return
+
+    def _load_items(self):
+        if self._next_page:
+            resp = self.parent.session.get(self._next_page)
+        else:
+            resp = self.parent.session.get(self._cls.API_BASE,
+                                           params=self.params)
+        next_page = resp.links.get('next', {}).get('url')
+        if next_page:
+            self._next_page = next_page
+        else:
+            self._loaded = True
+            self._loaded_at = SparkTime()
+        self._items.extend([self.cls(parent=self.parent, **item)
+                            for item in resp.json()['items']])
+        return
+
+    def __getitem__(self, idx):
+        if isinstance(idx, int):
+            while idx > len(self._items) and not self._loaded:
+                self._load_items()
+            if idx > len(self._items):
+                raise IndexError('List index must be <= {0}. ({1} > {0})'.
+                                 format(str(len(self._items) - 1), idx)
+                                 )
+            return self._items[idx]
+
+        # Dict Style lookups
+        elif isinstance(idx, str):
+            if is_uuid(key):
+                key = uuid_to_api_id(key, self.cls.path)
+            if is_api_id(key):
+                return self.cls(key, parent=self.parent)
+            else:
+                raise TypeError('Key must be a uuid or Spark API ID')
+        # Fail!
+        else:
+            raise ValueError(f'{self} requires an int or {self.cls}.id')
+
+    def __iter__(self):
+        pos = 0
+        while True:
+            if self._loaded and pos == len(self._items) - 1:
+                return
+            if pos <= len(self._items) - 1:
+                yield self._items[pos]
+                pos += 1
+            if not self._loaded:
+                self.more()
+                continue
+
+    def __len__(self):
+        return len(self._items)
+
+    def __setitem__(self, key, value):
+        raise NotImplementedError
+
+    def __delitem__(self, idx):
+        raise NotImplementedError
+
+    def insert(self, index, value):
+        raise NotImplementedError
 
     def find(self, key, regexp, re_flags=None):
         '''
@@ -135,13 +202,15 @@ class SparkContainer(object):
             >>> rooms = spark.rooms.find('title', '^.*lunch.*$', re_flags=re.I)
 
         '''
+        items = []
         if re_flags:
             pattern = re.compile(regexp, re_flags)
         pattern = re.compile(regexp)
 
         for item in self.__make_iter():
             if hasattr(item, key) and pattern.search(getattr(item, key)):
-                yield item
+                items.append(item)
+        return items
 
     def filtered(self, expr):
         '''
@@ -155,87 +224,15 @@ class SparkContainer(object):
             >>> # Find all locked rooms
             >>> rooms = spark.rooms.filtered(lambda room: room.isLocked)
         '''
-        for item in self.__make_iter():
+        items = []
+        for item in self:
             if expr(item):
-                yield item
-
-    def __make_iter(self):
-        response = self.session.get(self._cls.API_BASE, params=self.params)
-        _next = response.links.get('next', {}).get('url')
-        buffer = deque(response.json()['items'])
-        count = 0
-        _max_count = self.__class__._length_map.get(self._key, 0)
-
-        while buffer:
-            count += 1
-            if count > _max_count:
-                self.__class__._length_map[self._key] = count
-            if self.parent:
-                yield self._cls(parent=self.parent,
-                                **buffer.popleft())
-            else:
-                yield self._cls(parent=self.parent, **buffer.popleft())
-
-            if not buffer and _next:
-                response = self.session.get(_next)
-                _next = response.links.get('next', {}).get('url')
-                buffer.extend(response.json()['items'])
-
-    def __iter__(self):
-        return self.__make_iter()
-
-    def __getitem__(self, key):
-
-        # List style lookups
-        if isinstance(key, int):
-            if key >= 0:
-                for count, item in enumerate(self.__make_iter()):
-                    if count == key:
-                        return item
-                else:
-                    raise IndexError(f'{self} index out of range')
-
-            # Negative index, must traverse all items.
-            else:
-                _items = list(self.__make_iter())
-                if abs(key) <= len(_items) + 1:
-                    return _items[key]
-                else:
-                    raise IndexError(f'{self} index out of range')
-
-        # Slicing
-        elif isinstance(key, slice):
-            _max = max(abs(key.start or 0), abs(key.stop or 0))
-            _negative = any(k < 0 for k in (key.start, key.stop))
-            _items = []
-            for count, item in enumerate(self.__make_iter()):
-                _items.append(item)
-                if count == _max and not _negative:
-                    return _items[key]
-            if _negative and count >= _max:
-                return _items[key]
-            else:
-                raise IndexError(f'{self} index out of range')
-
-        # Dict Style lookups
-        elif isinstance(key, str):
-            if is_uuid(key):
-                key = uuid_to_api_id(key, self.cls.path)
-            if is_api_id(key):
-                return self.cls(key, parent=self.parent)
-            else:
-                raise TypeError('Key must be a uuid or Spark API ID')
-
-        # Fail!
-        else:
-            raise ValueError(f'{self} requires an int or {self.cls}.id')
-
-    def __len__(self):
-        if self.__class__._length_map.get(self._key):
-            return self.__class__._length_map.get(self._key, 0)
-        else:
-            list(self.__make_iter())
-            return self.__class__._length_map.get(self._key, 0)
+                items.append(item)
+        return items
 
     def __repr__(self):
         return f'SparkContainer({self.cls})'
+
+    def __str__(self):
+        return str(self._items)
+

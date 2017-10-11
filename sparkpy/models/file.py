@@ -4,7 +4,6 @@ sparkpy.models.file
 A class to handle files attached to a Cisco Spark Message
 '''
 
-from ..session import SparkSession
 from os import sep
 from os.path import expanduser
 
@@ -19,9 +18,10 @@ class SparkFile(object):
     :type url: str
     '''
 
-    def __init__(self, url):
+    def __init__(self, url, parent=None):
         self._url = url
         self._filename = None
+        self._parent = parent
 
     @property
     def url(self):
@@ -29,14 +29,17 @@ class SparkFile(object):
         return self._url
 
     @property
+    def parent(self):
+        return self._parent
+
+    @property
     def filename(self):
         ''' The filename. This is fetched when accessed or downloaded '''
         if not self._filename:
-            with SparkSession() as s:
-                resp = resp = s.head(self.url)
-                c_disp = resp.headers.get('Content-Disposition')
-                self._filename = c_disp.split('filename=')[1].replace('"', '')
-            return self._filename
+            resp = self.parent.session.head(self.url)
+            c_disp = resp.headers.get('Content-Disposition')
+            self._filename = c_disp.split('filename=')[1].replace('"', '')
+        return self._filename
 
     @filename.setter
     def filename(self, val):
@@ -51,16 +54,12 @@ class SparkFile(object):
                      If the paramater is not passed then the file is saved to
                      the users download directory.
         '''
-        with SparkSession() as s:
-            resp = s.get(self.url, stream=True)
-            if not self._filename:
-                c_disp = resp.headers.get('Content-Disposition')
-                if c_disp:
-                    self.filename = c_disp.split('filename=')[1].replace('"', '')
-                with open(path + self.filename, 'wb') as f:
-                    for chunk in resp.iter_content(chunk_size=1024):
-                        if chunk:
-                            f.write(chunk)
+        resp = self.parent.session.get(self.url, stream=True)
+        with open(path + self.filename, 'wb') as f:
+            for chunk in resp.iter_content(chunk_size=1024):
+                if chunk:
+                    f.write(chunk)
+        return
 
     def __repr__(self):
         return f'SparkFile({self.filename})'

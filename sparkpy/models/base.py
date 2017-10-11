@@ -100,6 +100,10 @@ class SparkBase(ABC, object):
         return self._parent
 
     @property
+    def session(self):
+        return self._get_session()
+
+    @property
     def url(self):
         return f'https://api.ciscospark.com/v1/{self.path}/{self.id}'
 
@@ -145,7 +149,7 @@ class SparkBase(ABC, object):
         '''
 
         if self.parent:
-            resp = self._get_session().get(self.url)
+            resp = self.session.get(self.url)
             if resp.status_code == 200:
                 self._load_data(resp.json())
         else:
@@ -223,6 +227,7 @@ class SparkBase(ABC, object):
 
     def _get_parent(self):
         parent = getattr(self, 'parent', None)
+        #  Get to the root parent
         while getattr(parent, 'parent', None):
             parent = parent.parent
         return parent
@@ -238,7 +243,7 @@ class SparkBase(ABC, object):
         :return: None
         :raises: `SparkException`
         '''
-        response = self._get_session().delete(self.url)
+        response = self.session.delete(self.url)
         if response.status_code != 204:
             # TODO Exceptions
             req_headers = response.request.headers

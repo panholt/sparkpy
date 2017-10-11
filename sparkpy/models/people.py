@@ -2,7 +2,6 @@ import logging
 from .base import SparkBase, SparkProperty
 from .time import SparkTime
 from .organization import SparkOrganization
-from ..session import SparkSession
 
 log = logging.getLogger('sparkpy.people')
 

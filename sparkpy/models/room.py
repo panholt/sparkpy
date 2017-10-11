@@ -3,7 +3,6 @@ from .time import SparkTime
 from .message import SparkMessage
 from .membership import SparkMembership
 from .container import SparkContainer
-from ..session import SparkSession
 
 
 class SparkRoom(SparkBase):
@@ -42,8 +41,7 @@ class SparkRoom(SparkBase):
         '''
         return SparkContainer(SparkMembership,
                               params={'roomId': self.id},
-                              parent=self,
-                              session=self.parent.session)
+                              parent=self)
 
     @property
     def messages(self):
@@ -54,8 +52,7 @@ class SparkRoom(SparkBase):
         '''
         return SparkContainer(SparkMessage,
                               params=self.message_params,
-                              parent=self,
-                              session=self.parent.session)
+                              parent=self)
 
     @property
     def link(self):
