@@ -35,7 +35,7 @@ class SparkBase(ABC, object):
     def __init__(self, *args, **kwargs):
         self._id = ''
         self._path = kwargs.pop('path')
-        self._parent = kwargs.pop('parent', None)
+        self._parent = kwargs.pop('parent', False)
         self._uuid = None
         self._loaded = False
         self._loaded_at = None
